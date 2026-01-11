@@ -13,6 +13,8 @@ from .kis_client import KISClient
 from .kiwoom_client import KiwoomClient
 from .binance_client import BinanceClient
 from .upbit_client import UpbitClient
+from .preprocessor import DataPreprocessor
+from .cache import DataCache, CacheConfig, CachedClient, create_cache
 
 __all__ = [
     # Base
@@ -32,4 +34,11 @@ __all__ = [
     # Crypto
     "BinanceClient",
     "UpbitClient",
+    # Processing
+    "DataPreprocessor",
+    # Cache
+    "DataCache",
+    "CacheConfig",
+    "CachedClient",
+    "create_cache",
 ]

@@ -5,19 +5,19 @@
 ## 전체 진행률
 
 ```
-Phase 1: Data Infrastructure    [███████   ] 70%
+Phase 1: Data Infrastructure    [██████████] 100%
 Phase 2: Factor Modeling        [          ] 0%
 Phase 3: Regime Classification  [          ] 0%
 Phase 4: Strategy Development   [          ] 0%
 Phase 5: Backtesting           [          ] 0%
 Phase 6: Production            [          ] 0%
 ─────────────────────────────────────────────
-Total Progress                  [█▌        ] 12%
+Total Progress                  [██        ] 17%
 ```
 
 ## Phase 상세
 
-### Phase 1: Data Infrastructure (70%)
+### Phase 1: Data Infrastructure (100%) ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -28,8 +28,8 @@ Total Progress                  [█▌        ] 12%
 | 키움증권 API | ✅ | 국내 주식 (모의/실전 지원) |
 | Binance API | ✅ | 글로벌 암호화폐 (testnet 지원) |
 | Upbit API | ✅ | 국내 암호화폐 |
-| 데이터 전처리 파이프라인 | ⏳ | - |
-| 로컬 캐싱 시스템 | ⏳ | - |
+| 데이터 전처리 파이프라인 | ✅ | 결측치, 이상치, 수익률, 정규화 |
+| 로컬 캐싱 시스템 | ✅ | Parquet/Pickle, TTL, 데코레이터 |
 
 ### Phase 2: Factor Modeling (0%)
 
@@ -97,19 +97,14 @@ Total Progress                  [█▌        ] 12%
 - 키움증권 API 클라이언트 구현 (시세/주문/잔고)
 - Binance API 클라이언트 구현 (HMAC 서명, OHLCV/주문)
 - Upbit API 클라이언트 구현 (JWT 인증, OHLCV/주문)
-- 전체 단위 테스트 작성
+- 데이터 전처리 파이프라인 구현 (결측치, 이상치, 수익률, 정규화)
+- 캐싱 시스템 구현 (Parquet/Pickle, TTL, 데코레이터)
+- **Phase 1 완료**
 
 ## 다음 작업
 
-1. [x] Phase 1 세부 문서 생성 (`docs/phases/phase-1/`)
-2. [x] 프로젝트 기본 구조 생성 (`src/`, `tests/`, `config/`)
-3. [x] requirements.txt 작성
-4. [x] Base Client 구현
-5. [x] FMP API 클라이언트 구현
-6. [x] FRED API 클라이언트 구현
-7. [x] 한국투자증권 API 클라이언트 구현
-8. [x] 키움증권 API 클라이언트 구현
-9. [x] Binance API 클라이언트 구현
-10. [x] Upbit API 클라이언트 구현
-11. [ ] 데이터 전처리 파이프라인
-12. [ ] 캐싱 시스템
+### Phase 2: Factor Modeling
+1. [ ] CAPM 구현
+2. [ ] Fama-French 3팩터 모델 (SMB, HML)
+3. [ ] Fama-French 5팩터 모델 (RMW, CMA)
+4. [ ] 팩터 중립화 (Long-Short 전략)
