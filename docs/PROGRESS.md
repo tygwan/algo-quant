@@ -137,11 +137,23 @@ Total Progress                  [██████████] 100%
 - 주문 실행 엔진 구현
 - **Phase 6 완료**
 - **프로젝트 100% 완료**
+- **UI Migration: Streamlit → Dash**
+  - Codex 협업으로 아키텍처 검증
+  - Callback 기반 반응형 UI 구현
+  - 모듈화된 컴포넌트 구조:
+    - `components/`: theme, navbar, charts, metric_card
+    - `layouts/`: dashboard, data_explorer, factor_analysis, regime_monitor, backtest, portfolio
+    - `callbacks/`: 페이지별 콜백 분리
+    - `services/`: DataService 데이터 레이어
+    - `state/`: 전역 상태 관리
+  - CSS 변수 기반 다크 테마
+  - Plotly 차트 통합 (dark template)
 
 ## 다음 작업
 
 ### 향후 개선 사항 (Optional)
 1. [ ] 추가 브로커 연동 (한투, 키움)
-2. [ ] 모니터링 대시보드 고도화
-3. [ ] 알림 시스템 (Telegram, Slack)
-4. [ ] 멀티 전략 관리
+2. [ ] 알림 시스템 (Telegram, Slack)
+3. [ ] 멀티 전략 관리
+4. [ ] 인증 시스템 (Production)
+5. [ ] flask-caching으로 성능 최적화

@@ -4,6 +4,7 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Progress](https://img.shields.io/badge/Progress-100%25-brightgreen.svg)]()
 
 ## 개요
 
@@ -15,7 +16,8 @@ algo-quant는 **국내/해외 주식 + 암호화폐**를 대상으로 한 통합
 - **팩터 모델링**: CAPM, Fama-French 3팩터/5팩터 모델
 - **거시경제 체제 분류**: FRED 지표 기반 경기 사이클 분석
 - **자동화된 백테스팅**: Walk-forward 분석, 성과 지표 계산
-- **실거래 연동** (예정): 한국투자증권, 키움증권, Binance, Upbit
+- **실거래 연동**: Binance Paper Trading 지원
+- **웹 대시보드**: Dash 기반 반응형 다크 테마 UI
 
 ## 지원 데이터 소스
 
@@ -33,7 +35,7 @@ algo-quant는 **국내/해외 주식 + 암호화폐**를 대상으로 한 통합
 ### 요구사항
 
 - Python 3.11 이상
-- pip 또는 uv
+- uv (권장) 또는 pip
 
 ### 설치 방법
 
@@ -42,12 +44,11 @@ algo-quant는 **국내/해외 주식 + 암호화폐**를 대상으로 한 통합
 git clone https://github.com/your-username/algo-quant.git
 cd algo-quant
 
-# 가상환경 생성 및 활성화
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# uv로 설치 (권장)
+uv sync
 
-# 의존성 설치
-pip install -r requirements.txt
+# 또는 pip으로 설치
+pip install -e .
 ```
 
 ### API 키 설정
@@ -78,16 +79,42 @@ algo-quant/
 │   ├── regime/         # 경기 체제 분류
 │   ├── strategy/       # 투자 전략
 │   ├── backtest/       # 백테스팅 엔진
-│   └── execution/      # 실거래 (예정)
+│   ├── execution/      # 실거래 시스템
+│   └── ui/             # Dash 웹 대시보드
+│       ├── components/ # 재사용 UI 컴포넌트
+│       ├── layouts/    # 페이지 레이아웃
+│       ├── callbacks/  # Dash 콜백
+│       ├── services/   # 데이터 서비스
+│       └── assets/     # CSS 스타일
 ├── tests/              # 테스트
 ├── config/             # 설정 파일
 ├── docs/               # 문서
 │   ├── PRD.md          # 제품 요구사항
 │   ├── TECH-SPEC.md    # 기술 설계서
-│   ├── PROGRESS.md     # 진행 현황
-│   └── phases/         # Phase별 문서
+│   └── PROGRESS.md     # 진행 현황
 └── README.md
 ```
+
+## 웹 대시보드
+
+Dash 기반 반응형 웹 대시보드를 제공합니다.
+
+```bash
+# 대시보드 실행
+uv run python -m src.ui.dash_app
+
+# 브라우저에서 접속
+# http://localhost:8050
+```
+
+### 대시보드 기능
+
+- **Dashboard**: 포트폴리오 현황, 핵심 지표
+- **Data Explorer**: 주식/암호화폐/거시경제 데이터 탐색
+- **Factor Analysis**: Fama-French 팩터 분석
+- **Regime Monitor**: 경기 체제 모니터링
+- **Backtest**: 전략 백테스팅
+- **Portfolio**: 포트폴리오 관리 및 최적화
 
 ## 사용법
 
@@ -144,41 +171,49 @@ print(klines.head())
 
 ## 개발 현황
 
-### Phase 1: Data Infrastructure (진행 중)
+```
+Phase 1: Data Infrastructure    [██████████] 100%
+Phase 2: Factor Modeling        [██████████] 100%
+Phase 3: Regime Classification  [██████████] 100%
+Phase 4: Strategy Development   [██████████] 100%
+Phase 5: Backtesting           [██████████] 100%
+Phase 6: Production            [██████████] 100%
+─────────────────────────────────────────────
+Total Progress                  [██████████] 100%
+```
 
-| 구성요소 | 상태 |
-|----------|------|
-| Base Client | ✅ 완료 |
-| FMP Client (미국 주식) | ✅ 완료 |
-| FRED Client (거시경제) | 🔄 진행 중 |
-| KIS Client (한국투자증권) | ⏳ 대기 |
-| Kiwoom Client (키움증권) | ⏳ 대기 |
-| Binance Client | ⏳ 대기 |
-| Upbit Client | ⏳ 대기 |
+### 완료된 기능
 
-### 향후 계획
+| Phase | 주요 기능 |
+|-------|----------|
+| Phase 1 | FMP, FRED, KIS, Kiwoom, Binance, Upbit API 클라이언트, 캐싱 시스템 |
+| Phase 2 | CAPM, Fama-French 3팩터/5팩터 모델, 팩터 중립화 |
+| Phase 3 | FRED 지표 처리, HMM 체제 분류기, 시그널 생성 |
+| Phase 4 | 포트폴리오 최적화 (Mean-Variance, Risk Parity), 체제 적응형 전략 |
+| Phase 5 | 백테스팅 엔진, Walk-forward 분석, 벤치마크 비교 |
+| Phase 6 | WebSocket 실시간 데이터, 자동 리밸런싱, 브로커 연동 |
 
-- **Phase 2**: 팩터 모델링 (CAPM, FF3, FF5)
-- **Phase 3**: 거시경제 체제 분류
-- **Phase 4**: 투자 전략 개발
-- **Phase 5**: 백테스팅
-- **Phase 6**: 실거래 연동
+### UI 기술 스택
+
+- **Dash**: Callback 기반 반응형 UI
+- **Plotly**: 인터랙티브 차트
+- **Bootstrap**: 반응형 레이아웃
+- **Dark Theme**: Claude 스타일 다크 테마
 
 ## 테스트
 
 ```bash
 # 전체 테스트 실행
-pytest
+uv run pytest
 
 # 커버리지 포함
-pytest --cov=src --cov-report=term-missing
+uv run pytest --cov=src --cov-report=term-missing
 ```
 
 ## 문서
 
 - [PRD (제품 요구사항)](docs/PRD.md)
 - [기술 설계서](docs/TECH-SPEC.md)
-- [개발 범위](docs/DEVELOPMENT-SCOPE.md)
 - [진행 현황](docs/PROGRESS.md)
 
 ## 참고 자료
@@ -190,6 +225,7 @@ pytest --cov=src --cov-report=term-missing
 - [키움증권 Open API](https://openapi.kiwoom.com)
 - [Binance API](https://binance-docs.github.io/apidocs)
 - [Upbit API](https://docs.upbit.com)
+- [Dash Documentation](https://dash.plotly.com/)
 
 ## 라이선스
 
