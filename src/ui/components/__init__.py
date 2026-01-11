@@ -23,6 +23,14 @@ from src.ui.components.charts import (
     create_regime_timeline,
     create_chart_container,
 )
+from src.ui.components.feedback import (
+    create_loading_spinner,
+    create_error_alert,
+    create_success_toast,
+    create_warning_alert,
+    create_info_alert,
+    create_confirmation_dialog,
+)
 
 __all__ = [
     # Theme
@@ -47,4 +55,11 @@ __all__ = [
     "create_histogram",
     "create_regime_timeline",
     "create_chart_container",
+    # Feedback
+    "create_loading_spinner",
+    "create_error_alert",
+    "create_success_toast",
+    "create_warning_alert",
+    "create_info_alert",
+    "create_confirmation_dialog",
 ]

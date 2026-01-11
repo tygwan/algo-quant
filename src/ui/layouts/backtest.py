@@ -13,6 +13,8 @@ from src.ui.components import (
     create_chart_container,
     create_empty_state,
     get_table_style,
+    create_loading_spinner,
+    COLORS,
 )
 
 
@@ -142,12 +144,22 @@ def create_configure_tab() -> html.Div:
                 ),
             ),
         ],
-    ) , html.Div(className="section-divider"), html.Button(
-            "Run Backtest",
-            id="run-backtest-btn",
-            className="btn-primary",
-            style={"width": "100%", "marginTop": "1rem"},
-        )
+    ), html.Div(className="section-divider"), html.Div(
+        id="backtest-error",
+        style={"marginTop": "1rem"},
+    ), dcc.Loading(
+        id="backtest-loading",
+        type="circle",
+        color=COLORS["primary"],
+        children=[
+            html.Button(
+                "Run Backtest",
+                id="run-backtest-btn",
+                className="btn-primary",
+                style={"width": "100%", "marginTop": "1rem"},
+            ),
+        ],
+    )
 
 
 def create_results_tab(results: dict = None) -> html.Div:

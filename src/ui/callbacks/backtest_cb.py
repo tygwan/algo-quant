@@ -1,6 +1,9 @@
 """Backtest page callbacks."""
 
-from dash import Input, Output, State, html
+import logging
+import traceback
+
+from dash import Input, Output, State, html, no_update
 from dash.exceptions import PreventUpdate
 import pandas as pd
 import numpy as np
@@ -11,6 +14,7 @@ from src.ui.components import (
     create_area_chart,
     create_histogram,
     create_chart_container,
+    create_error_alert,
 )
 from src.ui.services import DataService
 from src.ui.layouts.backtest import (
@@ -18,6 +22,8 @@ from src.ui.layouts.backtest import (
     create_results_tab,
     create_analysis_tab,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def register_backtest_callbacks(app):
@@ -42,6 +48,8 @@ def register_backtest_callbacks(app):
         [
             Output("backtest-results-store", "data"),
             Output("backtest-tabs", "value"),
+            Output("run-backtest-btn", "disabled"),
+            Output("backtest-error", "children"),
         ],
         [Input("run-backtest-btn", "n_clicks")],
         [
@@ -58,53 +66,81 @@ def register_backtest_callbacks(app):
         if not n_clicks:
             raise PreventUpdate
 
-        # Parse symbols
-        symbols = [s.strip().upper() for s in universe.split(",")]
+        try:
+            # Validate inputs
+            if not universe or not universe.strip():
+                return no_update, no_update, False, create_error_alert(
+                    "Please enter at least one stock symbol."
+                )
 
-        # Generate simulated backtest results
-        service = DataService(demo_mode=True)
-        prices = service.get_prices(symbols, periods=periods)
+            if capital is None or capital <= 0:
+                return no_update, no_update, False, create_error_alert(
+                    "Initial capital must be greater than zero."
+                )
 
-        # Calculate equal weight portfolio returns
-        returns = prices.pct_change().dropna()
-        portfolio_returns = returns.mean(axis=1)
+            # Parse symbols
+            symbols = [s.strip().upper() for s in universe.split(",") if s.strip()]
 
-        # Calculate metrics
-        total_return = (1 + portfolio_returns).prod() - 1
-        cagr = (1 + total_return) ** (252 / periods) - 1
-        volatility = portfolio_returns.std() * np.sqrt(252)
-        sharpe = cagr / volatility if volatility > 0 else 0
+            if not symbols:
+                return no_update, no_update, False, create_error_alert(
+                    "Please enter valid stock symbols separated by commas."
+                )
 
-        # Calculate drawdown
-        cumulative = (1 + portfolio_returns).cumprod()
-        rolling_max = cumulative.cummax()
-        drawdown = (cumulative - rolling_max) / rolling_max
-        max_drawdown = drawdown.min()
+            # Generate simulated backtest results
+            service = DataService(demo_mode=True)
+            prices = service.get_prices(symbols, periods=periods)
 
-        # Create results
-        results = {
-            "metrics": {
-                "total_return": total_return,
-                "cagr": cagr,
-                "sharpe_ratio": sharpe,
-                "max_drawdown": max_drawdown,
-                "volatility": volatility,
-            },
-            "portfolio_value": (capital * (1 + portfolio_returns).cumprod()).tolist(),
-            "dates": portfolio_returns.index.strftime("%Y-%m-%d").tolist(),
-            "returns": portfolio_returns.tolist(),
-            "drawdown": drawdown.tolist(),
-            "allocation": {s: 1 / len(symbols) for s in symbols},
-            "config": {
-                "strategy": strategy,
-                "symbols": symbols,
-                "rebalance": rebalance,
-                "capital": capital,
-                "commission": commission,
-            },
-        }
+            # Calculate equal weight portfolio returns
+            returns = prices.pct_change().dropna()
+            portfolio_returns = returns.mean(axis=1)
 
-        return results, "results"
+            # Calculate metrics
+            total_return = (1 + portfolio_returns).prod() - 1
+            cagr = (1 + total_return) ** (252 / periods) - 1
+            volatility = portfolio_returns.std() * np.sqrt(252)
+            sharpe = cagr / volatility if volatility > 0 else 0
+
+            # Calculate drawdown
+            cumulative = (1 + portfolio_returns).cumprod()
+            rolling_max = cumulative.cummax()
+            drawdown = (cumulative - rolling_max) / rolling_max
+            max_drawdown = drawdown.min()
+
+            # Create results
+            results = {
+                "metrics": {
+                    "total_return": total_return,
+                    "cagr": cagr,
+                    "sharpe_ratio": sharpe,
+                    "max_drawdown": max_drawdown,
+                    "volatility": volatility,
+                },
+                "portfolio_value": (capital * (1 + portfolio_returns).cumprod()).tolist(),
+                "dates": portfolio_returns.index.strftime("%Y-%m-%d").tolist(),
+                "returns": portfolio_returns.tolist(),
+                "drawdown": drawdown.tolist(),
+                "allocation": {s: 1 / len(symbols) for s in symbols},
+                "config": {
+                    "strategy": strategy,
+                    "symbols": symbols,
+                    "rebalance": rebalance,
+                    "capital": capital,
+                    "commission": commission,
+                },
+            }
+
+            return results, "results", False, None
+
+        except ValueError as e:
+            logger.warning(f"Backtest validation error: {e}")
+            return no_update, no_update, False, create_error_alert(
+                f"Invalid input: {str(e)}"
+            )
+        except Exception as e:
+            logger.error(f"Backtest error: {e}\n{traceback.format_exc()}")
+            return no_update, no_update, False, create_error_alert(
+                "An unexpected error occurred while running the backtest. Please try again."
+            )
 
     @app.callback(
         [

@@ -148,12 +148,40 @@ Total Progress                  [██████████] 100%
     - `state/`: 전역 상태 관리
   - CSS 변수 기반 다크 테마
   - Plotly 차트 통합 (dark template)
+- **UI/UX 개선 계획 수립 (Codex 협업 분석)**
+  - 로딩 상태 및 에러 처리 추가
+  - 반응형 디자인 개선 (모바일 지원)
+  - 네비게이션 개선 (브레드크럼, 그룹화)
+  - 차트 접근성 향상 (WCAG 준수)
+  - 폼 유효성 검사 및 사용자 피드백
+  - DataService 캐싱 구현
+- **UI/UX 개선 구현 완료**
+  - 로딩 스피너 및 에러 알림 컴포넌트 (`feedback.py`)
+  - 반응형 CSS (태블릿 1024px, 모바일 768px, 소형 480px)
+  - 햄버거 메뉴 및 사이드바 오버레이
+  - 네비게이션 그룹화 (Overview, Data, Analysis, Trading)
+  - 차트 접근성 개선 (색맹 친화 팔레트, ARIA 라벨)
+  - 콜백 에러 핸들링 (backtest, data_explorer, portfolio)
+  - DataService 5분 TTL 캐싱
+- **데이터 누적 시스템 분석**
+  - 현재: 파일 캐시 + 인메모리 캐시 (TTL 기반)
+  - 필요: PostgreSQL + TimescaleDB, APScheduler
+  - 데이터 품질 검증 프레임워크 필요
 
 ## 다음 작업
+
+### 데이터 누적 시스템 로드맵
+1. [ ] PostgreSQL + TimescaleDB 설정
+2. [ ] SQLAlchemy ORM 모델 정의
+3. [ ] APScheduler 데이터 수집 스케줄러
+4. [ ] 데이터 품질 검증 프레임워크
+5. [ ] 증분 업데이트 로직 (Upsert)
 
 ### 향후 개선 사항 (Optional)
 1. [ ] 추가 브로커 연동 (한투, 키움)
 2. [ ] 알림 시스템 (Telegram, Slack)
 3. [ ] 멀티 전략 관리
 4. [ ] 인증 시스템 (Production)
-5. [ ] flask-caching으로 성능 최적화
+5. [x] UI/UX 사용성 분석 및 개선
+6. [ ] Redis 캐싱 레이어
+7. [ ] Prometheus + Grafana 모니터링

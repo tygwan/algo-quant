@@ -12,81 +12,168 @@ def create_navbar(current_page: str = "dashboard") -> html.Div:
     Returns:
         Dash HTML component for sidebar
     """
-    nav_items = [
-        {"id": "dashboard", "icon": "◉", "label": "Dashboard"},
-        {"id": "data-explorer", "icon": "◈", "label": "Data Explorer"},
-        {"id": "factor-analysis", "icon": "◇", "label": "Factor Analysis"},
-        {"id": "regime-monitor", "icon": "◆", "label": "Regime Monitor"},
-        {"id": "backtest", "icon": "▣", "label": "Backtest"},
-        {"id": "portfolio", "icon": "◧", "label": "Portfolio"},
+    # Navigation items grouped by category
+    nav_groups = [
+        {
+            "id": "overview",
+            "label": "Overview",
+            "icon": "⬡",
+            "items": [
+                {"id": "dashboard", "icon": "◉", "label": "Dashboard"},
+            ],
+        },
+        {
+            "id": "data",
+            "label": "Data",
+            "icon": "⬢",
+            "items": [
+                {"id": "data-explorer", "icon": "◈", "label": "Data Explorer"},
+            ],
+        },
+        {
+            "id": "analysis",
+            "label": "Analysis",
+            "icon": "◇",
+            "items": [
+                {"id": "factor-analysis", "icon": "◇", "label": "Factor Analysis"},
+                {"id": "regime-monitor", "icon": "◆", "label": "Regime Monitor"},
+            ],
+        },
+        {
+            "id": "trading",
+            "label": "Trading",
+            "icon": "▣",
+            "items": [
+                {"id": "backtest", "icon": "▣", "label": "Backtest"},
+                {"id": "portfolio", "icon": "◧", "label": "Portfolio"},
+            ],
+        },
     ]
 
+    def create_nav_group(group: dict) -> html.Div:
+        """Create a navigation group with header and items."""
+        return html.Div(
+            className="nav-group",
+            children=[
+                # Group header with icon
+                html.Div(
+                    className="nav-group-header",
+                    children=[
+                        html.Span(group["icon"], className="nav-group-icon"),
+                        html.Span(group["label"], className="nav-group-label"),
+                    ],
+                ),
+                # Group items
+                html.Div(
+                    className="nav-group-items",
+                    children=[
+                        dcc.Link(
+                            className=f"nav-item {'active' if item['id'] == current_page else ''}",
+                            href=f"/{item['id']}",
+                            children=[
+                                html.Span(item["icon"], className="nav-icon"),
+                                html.Span(item["label"]),
+                            ],
+                            **{"aria-label": f"Navigate to {item['label']}"},
+                        )
+                        for item in group["items"]
+                    ],
+                ),
+            ],
+        )
+
     return html.Div(
-        className="sidebar",
         children=[
-            # Brand
+            # Mobile sidebar overlay
             html.Div(
-                className="sidebar-brand",
-                children=[
-                    html.Div("◉", className="sidebar-brand-icon"),
-                    html.Div([
-                        html.Div("Algo-Quant", className="sidebar-brand-text"),
-                        html.Div("Quantitative Investing", className="sidebar-brand-subtitle"),
-                    ]),
-                ],
+                id="sidebar-overlay",
+                className="sidebar-overlay",
+                **{"aria-hidden": "true"},
             ),
 
-            # Navigation section
-            html.Div("Navigation", className="nav-section-title"),
-
-            # Nav items
-            html.Div([
-                html.Div(
-                    id={"type": "nav-item", "index": item["id"]},
-                    className=f"nav-item {'active' if item['id'] == current_page else ''}",
-                    children=[
-                        html.Span(item["icon"], className="nav-icon"),
-                        html.Span(item["label"]),
-                    ],
-                    n_clicks=0,
-                )
-                for item in nav_items
-            ]),
-
-            # Divider
-            html.Div(className="section-divider", style={"marginTop": "auto"}),
-
-            # Settings section
-            html.Div("Settings", className="nav-section-title"),
-
-            # Demo mode toggle
-            html.Div([
-                dcc.Checklist(
-                    id="demo-mode-toggle",
-                    options=[{"label": " Demo Mode", "value": "demo"}],
-                    value=["demo"],
-                    style={"color": "var(--text-secondary)"},
-                ),
-                html.Div(
-                    id="demo-mode-badge",
-                    className="demo-badge",
-                    children=[
-                        html.Div("✓ Demo Mode Active", className="demo-badge-title"),
-                        html.Div("Using simulated market data", className="demo-badge-text"),
-                    ],
-                ),
-            ]),
-
-            # Version
+            # Sidebar container
             html.Div(
-                style={
-                    "marginTop": "2rem",
-                    "paddingTop": "1rem",
-                    "borderTop": "1px solid var(--border)",
-                    "color": "var(--text-muted)",
-                    "fontSize": "0.75rem",
-                },
-                children="Version 0.2.0",
+                id="sidebar",
+                className="sidebar",
+                role="navigation",
+                **{"aria-label": "Main navigation"},
+                children=[
+                    # Brand with hamburger toggle for mobile
+                    html.Div(
+                        className="sidebar-brand",
+                        children=[
+                            # Hamburger toggle button (shown on mobile via CSS)
+                            html.Button(
+                                id="sidebar-toggle",
+                                className="sidebar-toggle",
+                                children=[
+                                    html.Span(className="hamburger-line"),
+                                    html.Span(className="hamburger-line"),
+                                    html.Span(className="hamburger-line"),
+                                ],
+                                **{
+                                    "aria-label": "Toggle navigation menu",
+                                    "aria-expanded": "false",
+                                    "aria-controls": "sidebar",
+                                },
+                            ),
+                            html.Div("◉", className="sidebar-brand-icon"),
+                            html.Div([
+                                html.Div("Algo-Quant", className="sidebar-brand-text"),
+                                html.Div("Quantitative Investing", className="sidebar-brand-subtitle"),
+                            ]),
+                        ],
+                    ),
+
+                    # Navigation groups
+                    html.Nav(
+                        className="nav-container",
+                        **{"aria-label": "Primary navigation"},
+                        children=[create_nav_group(group) for group in nav_groups],
+                    ),
+
+                    # Divider
+                    html.Div(className="section-divider", style={"marginTop": "auto"}),
+
+                    # Settings section
+                    html.Div(
+                        className="nav-group-header",
+                        children=[
+                            html.Span("⚙", className="nav-group-icon"),
+                            html.Span("Settings", className="nav-group-label"),
+                        ],
+                    ),
+
+                    # Demo mode toggle
+                    html.Div([
+                        dcc.Checklist(
+                            id="demo-mode-toggle",
+                            options=[{"label": " Demo Mode", "value": "demo"}],
+                            value=["demo"],
+                            style={"color": "var(--text-secondary)"},
+                        ),
+                        html.Div(
+                            id="demo-mode-badge",
+                            className="demo-badge",
+                            children=[
+                                html.Div("Demo Mode Active", className="demo-badge-title"),
+                                html.Div("Using simulated market data", className="demo-badge-text"),
+                            ],
+                        ),
+                    ]),
+
+                    # Version
+                    html.Div(
+                        style={
+                            "marginTop": "2rem",
+                            "paddingTop": "1rem",
+                            "borderTop": "1px solid var(--border)",
+                            "color": "var(--text-muted)",
+                            "fontSize": "0.75rem",
+                        },
+                        children="Version 0.2.0",
+                    ),
+                ],
             ),
         ],
     )

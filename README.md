@@ -2,6 +2,7 @@
 
 퀀트 투자 자동화 에이전트 - Fama-French 멀티팩터 모델과 거시경제 체제 분류를 활용한 포트폴리오 관리 시스템
 
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)]()
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Progress](https://img.shields.io/badge/Progress-100%25-brightgreen.svg)]()
@@ -199,6 +200,10 @@ Total Progress                  [██████████] 100%
 - **Plotly**: 인터랙티브 차트
 - **Bootstrap**: 반응형 레이아웃
 - **Dark Theme**: Claude 스타일 다크 테마
+- **Responsive Design**: 모바일/태블릿 지원
+- **Accessibility**: WCAG 준수, 키보드 네비게이션
+- **Error Handling**: 사용자 친화적 에러 메시지
+- **Caching**: DataService 캐싱으로 성능 최적화
 
 ## 테스트
 

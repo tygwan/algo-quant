@@ -1,8 +1,7 @@
 """Dash application entry point."""
 
-from dash import Dash, html, dcc, page_container
+from dash import Dash, html, dcc
 from dash.dependencies import Input, Output, State
-import dash_bootstrap_components as dbc
 
 from src.ui.components import create_navbar
 from src.ui.layouts import (
@@ -15,10 +14,9 @@ from src.ui.layouts import (
 )
 from src.ui.state import PAGE_CONFIG
 
-# Initialize app
+# Initialize app (no Bootstrap theme to avoid CSS conflicts)
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True,
     title="algo-quant Dashboard",
     update_title="Loading...",
