@@ -1,43 +1,45 @@
-# Phase 4: Tasks
+# Phase 4 Tasks
 
-## Task List
+## 작업 목록
 
-### T4-01: 전략 기본 클래스
-- **Status**: ⏳ 대기
-- **Depends on**: Phase 2, 3 완료
-- **Subtasks**:
-  - [ ] BaseStrategy ABC
-  - [ ] generate_signals 인터페이스
-  - [ ] calculate_positions 인터페이스
+### 1. 포트폴리오 최적화
+- [x] `src/strategy/optimizer.py` 생성
+- [x] Mean-Variance 최적화
+- [x] Risk Parity
+- [x] Minimum Variance
+- [x] Maximum Sharpe
+- [x] Equal Weight, Inverse Volatility
 
-### T4-02: 팩터 기반 전략
-- **Status**: ⏳ 대기
-- **Subtasks**:
-  - [ ] FactorStrategy 클래스
-  - [ ] 팩터 점수 계산
-  - [ ] 자산 랭킹 로직
-  - [ ] 단위 테스트
+### 2. 팩터 전략
+- [x] `src/strategy/factor_strategy.py` 생성
+- [x] 팩터 스코어 계산 (Value, Momentum, Quality, Size, Low Vol)
+- [x] 팩터 틸트 가중치 생성
+- [x] 멀티 팩터 조합
+- [x] 체제별 팩터 가중치
 
-### T4-03: 체제 적응형 전략
-- **Status**: ⏳ 대기
-- **Subtasks**:
-  - [ ] RegimeAdaptiveStrategy 클래스
-  - [ ] 체제별 배분 규칙
-  - [ ] 전환 로직
-  - [ ] 단위 테스트
+### 3. 체제 적응형 전략
+- [x] `src/strategy/regime_strategy.py` 생성
+- [x] 체제별 목표 배분
+- [x] 체제 전환 처리 (점진적 전환)
+- [x] 전술적 오버레이
 
-### T4-04: 포트폴리오 구성
-- **Status**: ⏳ 대기
-- **Subtasks**:
-  - [ ] Portfolio 클래스
-  - [ ] 포지션 관리
-  - [ ] 리밸런싱 로직
+### 4. 리스크 관리
+- [x] `src/strategy/risk_manager.py` 생성
+- [x] 포지션 사이징 (Kelly, Fixed Fractional, Volatility Target)
+- [x] 손절 규칙 (Fixed, ATR, Trailing)
+- [x] 리스크 한도 검사 (Position, Sector, Drawdown, VaR)
 
-### T4-05: 리스크 관리
-- **Status**: ⏳ 대기
-- **Subtasks**:
-  - [ ] 최대 포지션 제한
-  - [ ] 손절 규칙
-  - [ ] 변동성 조절
+### 5. 테스트
+- [x] 최적화 테스트
+- [x] 전략 테스트
+- [x] 리스크 관리 테스트
 
-**Phase Progress**: 0/5 tasks (0%)
+## 진행 상황
+
+| Task | 상태 | 완료일 |
+|------|------|--------|
+| Portfolio Optimizer | ✅ | 2026-01-11 |
+| Factor Strategy | ✅ | 2026-01-11 |
+| Regime Strategy | ✅ | 2026-01-11 |
+| Risk Manager | ✅ | 2026-01-11 |
+| Tests | ✅ | 2026-01-11 |
