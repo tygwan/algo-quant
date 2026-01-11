@@ -1,0 +1,29 @@
+# Application Settings
+
+cache:
+  enabled: true
+  directory: ".cache"
+  expiry:
+    daily_prices: 86400      # 1 day in seconds
+    financial_statements: 604800  # 1 week
+    macro_indicators: 86400  # 1 day
+
+rate_limits:
+  fmp:
+    requests_per_minute: 300
+  fred:
+    requests_per_minute: 120
+  binance:
+    requests_per_minute: 1200
+  upbit:
+    requests_per_second: 10
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+data:
+  default_start_date: "2020-01-01"
+  default_symbols:
+    stocks: ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
+    crypto: ["BTC/USDT", "ETH/USDT"]

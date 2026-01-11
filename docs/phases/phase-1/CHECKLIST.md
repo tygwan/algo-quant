@@ -1,55 +1,37 @@
-# Phase 1: Completion Checklist
+# Phase 1 Completion Checklist
 
 ## 코드 품질
-
-- [ ] 모든 모듈에 docstring 작성
-- [ ] 타입 힌트 적용 (mypy 통과)
-- [ ] 린트 통과 (ruff/flake8)
-- [ ] 코드 포맷팅 (black)
+- [ ] 모든 함수에 타입 힌트 적용
+- [ ] docstring 작성 완료
+- [ ] pylint/flake8 경고 없음
+- [ ] 코드 리뷰 완료
 
 ## 테스트
+- [ ] 단위 테스트 커버리지 80% 이상
+- [ ] 모든 API 클라이언트 mock 테스트
+- [ ] 에러 케이스 테스트 포함
+- [ ] pytest 전체 통과
 
-- [ ] 단위 테스트 커버리지 80%+
-- [ ] FMP 클라이언트 테스트 통과
-- [ ] FRED 클라이언트 테스트 통과
-- [ ] Crypto 클라이언트 테스트 통과
-- [ ] 전처리 함수 테스트 통과
-- [ ] 캐시 시스템 테스트 통과
-- [ ] 통합 테스트 통과
+## 기능 검증
+- [ ] FMP API로 AAPL 3년치 가격 데이터 조회 성공
+- [ ] FRED API로 GDP, UNRATE 데이터 조회 성공
+- [ ] Binance API로 BTC/USDT 데이터 조회 성공
+- [ ] Rate limiting 동작 확인
+- [ ] 캐시 hit/miss 로깅 확인
 
-## 기능
+## 문서화
+- [ ] README.md에 사용법 추가
+- [ ] API 키 설정 가이드 작성
+- [ ] 예제 코드 작성
 
-- [ ] FMP API에서 주가 데이터 조회 가능
-- [ ] FRED API에서 거시 지표 조회 가능
-- [ ] Binance API에서 암호화폐 데이터 조회 가능
-- [ ] Rate Limiting 정상 동작
-- [ ] 캐싱 시스템 정상 동작
-- [ ] 결측치/이상치 처리 정상 동작
+## 최종 확인
+- [ ] 모든 의존성 requirements.txt에 명시
+- [ ] config/api_keys.yaml.example 생성
+- [ ] .gitignore에 민감 파일 추가
+- [ ] Phase 1 완료 리뷰
 
-## 문서
+---
 
-- [ ] API 클라이언트 사용법 문서화
-- [ ] 전처리 함수 사용법 문서화
-- [ ] 설정 파일 예제 작성
-
-## 검증 명령
-
-```bash
-# 테스트 실행
-pytest tests/unit/test_data/ -v --cov=src/data
-
-# 타입 체크
-mypy src/data/
-
-# 린트
-ruff check src/data/
-
-# 포맷 확인
-black --check src/data/
-```
-
-## Sign-off
-
-- [ ] 코드 리뷰 완료
-- [ ] 테스트 전체 통과
-- [ ] Phase 2 시작 준비 완료
+**Phase 1 완료 승인**: [ ]
+**승인일**:
+**비고**:

@@ -23,9 +23,12 @@
 ## 핵심 기능
 
 ### 1. 데이터 파이프라인
-- [ ] FMP API 클라이언트 (주식 기본/가격 데이터)
+- [ ] FMP API 클라이언트 (미국 주식 데이터)
 - [ ] FRED API 클라이언트 (거시경제 지표)
-- [ ] 암호화폐 API 클라이언트 (Binance/Upbit)
+- [ ] 한국투자증권 API 클라이언트 (국내 주식)
+- [ ] 키움증권 API 클라이언트 (국내 주식)
+- [ ] Binance API 클라이언트 (글로벌 암호화폐)
+- [ ] Upbit API 클라이언트 (국내 암호화폐)
 - [ ] 데이터 전처리 파이프라인
 - [ ] 로컬 캐싱 시스템
 
@@ -57,7 +60,10 @@
 ### 6. 실전 투자 (Future)
 - [ ] 실시간 데이터 파이프라인
 - [ ] 자동 리밸런싱
-- [ ] 브로커 연동
+- [ ] 한국투자증권 실거래 연동
+- [ ] 키움증권 실거래 연동
+- [ ] Binance 실거래 연동
+- [ ] Upbit 실거래 연동
 
 ## 비기능 요구사항
 
@@ -93,5 +99,9 @@
 ## 참조
 
 - [글로벌 퀀트 챔피언십 우승자와 함께 하는 퀀트 투자](https://fastcampus.co.kr/fin_online_quant01)
-- [FRED API 문서](https://fred.stlouisfed.org/docs/api/fred/)
 - [FMP API 문서](https://site.financialmodelingprep.com/developer/docs)
+- [FRED API 문서](https://fred.stlouisfed.org/docs/api/fred/)
+- [한국투자증권 API](https://apiportal.koreainvestment.com)
+- [키움증권 Open API](https://openapi.kiwoom.com)
+- [Binance API 문서](https://binance-docs.github.io/apidocs)
+- [Upbit API 문서](https://docs.upbit.com)

@@ -3,43 +3,39 @@
 ## 시스템 아키텍처
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         algo-quant Architecture                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐            │
-│  │   FMP API    │   │   FRED API   │   │ Binance/Upbit│            │
-│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘            │
-│         │                  │                  │                      │
-│         └──────────────────┼──────────────────┘                      │
-│                            ▼                                         │
-│                   ┌────────────────┐                                │
-│                   │  Data Layer    │                                │
-│                   │ (Preprocessor) │                                │
-│                   └────────┬───────┘                                │
-│                            │                                         │
-│         ┌──────────────────┼──────────────────┐                      │
-│         ▼                  ▼                  ▼                      │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐            │
-│  │Factor Models │   │   Regime     │   │   Strategy   │            │
-│  │ (FF3, FF5)   │   │ Classifier   │   │   Engine     │            │
-│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘            │
-│         │                  │                  │                      │
-│         └──────────────────┼──────────────────┘                      │
-│                            ▼                                         │
-│                   ┌────────────────┐                                │
-│                   │   Portfolio    │                                │
-│                   │  Constructor   │                                │
-│                   └────────┬───────┘                                │
-│                            │                                         │
-│              ┌─────────────┼─────────────┐                          │
-│              ▼                           ▼                          │
-│       ┌──────────────┐           ┌──────────────┐                  │
-│       │  Backtester  │           │   Executor   │                  │
-│       └──────────────┘           │   (Future)   │                  │
-│                                  └──────────────┘                  │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           algo-quant Architecture                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐       │
+│  │  FMP API    │ │  FRED API   │ │  KIS API    │ │ Kiwoom API  │       │
+│  │ (US Stocks) │ │   (Macro)   │ │ (KR Stocks) │ │ (KR Stocks) │       │
+│  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘       │
+│         │               │               │               │               │
+│  ┌──────┴───────────────┴───────────────┴───────────────┴──────┐       │
+│  │                     Unified Data Layer                        │       │
+│  │   (Preprocessor, Cache, Rate Limiter, Error Handler)         │       │
+│  └──────────────────────────────┬───────────────────────────────┘       │
+│                                 │                                        │
+│  ┌─────────────┐ ┌─────────────┐│┌─────────────┐ ┌─────────────┐       │
+│  │ Binance API │ │  Upbit API  │││Factor Models│ │   Regime    │       │
+│  │  (Crypto)   │ │  (Crypto)   │││ (FF3, FF5)  │ │ Classifier  │       │
+│  └──────┬──────┘ └──────┬──────┘│└──────┬──────┘ └──────┬──────┘       │
+│         └───────────────┴───────┘       └───────────────┴───────        │
+│                                         │                                │
+│                              ┌──────────┴──────────┐                    │
+│                              │   Strategy Engine   │                    │
+│                              │ (Factor + Regime)   │                    │
+│                              └──────────┬──────────┘                    │
+│                                         │                                │
+│                    ┌────────────────────┼────────────────────┐          │
+│                    ▼                    ▼                    ▼          │
+│             ┌──────────────┐   ┌──────────────┐   ┌──────────────┐     │
+│             │  Backtester  │   │ KIS/Kiwoom   │   │ Binance/Upbit│     │
+│             │  (Research)  │   │  (KR Trade)  │   │   (Crypto)   │     │
+│             └──────────────┘   └──────────────┘   └──────────────┘     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 기술 스택
@@ -61,20 +57,50 @@
 ```python
 # fmp_client.py
 class FMPClient:
-    """Financial Modeling Prep API 클라이언트"""
-    def __init__(self, api_key: str): ...
-    def get_stock_price(self, symbol: str, start: date, end: date) -> pd.DataFrame: ...
-    def get_fundamentals(self, symbol: str) -> dict: ...
-    def get_financial_ratios(self, symbol: str) -> pd.DataFrame: ...
+    """Financial Modeling Prep API 클라이언트 (미국 주식)"""
+    def get_historical_prices(self, symbol: str, start: date, end: date) -> pd.DataFrame: ...
+    def get_financial_statements(self, symbol: str, type: str) -> pd.DataFrame: ...
+    def get_company_profile(self, symbol: str) -> dict: ...
 
 # fred_client.py
 class FREDClient:
     """FRED API 클라이언트 (거시경제 지표)"""
-    def __init__(self, api_key: str): ...
     def get_series(self, series_id: str, start: date, end: date) -> pd.Series: ...
     def get_gdp(self) -> pd.Series: ...
     def get_unemployment(self) -> pd.Series: ...
     def get_yield_curve(self) -> pd.DataFrame: ...
+
+# kis_client.py
+class KISClient:
+    """한국투자증권 Open API 클라이언트"""
+    def get_price(self, symbol: str) -> dict: ...
+    def get_daily_prices(self, symbol: str, start: date, end: date) -> pd.DataFrame: ...
+    def get_balance(self) -> pd.DataFrame: ...
+    def create_order(self, symbol: str, qty: int, price: int, side: str) -> dict: ...
+
+# kiwoom_client.py
+class KiwoomClient:
+    """키움증권 Open API 클라이언트"""
+    def get_price(self, symbol: str) -> dict: ...
+    def get_daily_prices(self, symbol: str, start: date, end: date) -> pd.DataFrame: ...
+    def get_balance(self) -> pd.DataFrame: ...
+    def create_order(self, symbol: str, qty: int, price: int, side: str) -> dict: ...
+
+# binance_client.py
+class BinanceClient:
+    """Binance API 클라이언트 (글로벌 암호화폐)"""
+    def get_klines(self, symbol: str, interval: str, start: date, end: date) -> pd.DataFrame: ...
+    def get_ticker(self, symbol: str) -> dict: ...
+    def get_balance(self) -> pd.DataFrame: ...
+    def create_order(self, symbol: str, qty: float, price: float, side: str) -> dict: ...
+
+# upbit_client.py
+class UpbitClient:
+    """Upbit API 클라이언트 (국내 암호화폐)"""
+    def get_candles(self, market: str, interval: str, count: int) -> pd.DataFrame: ...
+    def get_ticker(self, market: str) -> dict: ...
+    def get_balance(self) -> pd.DataFrame: ...
+    def create_order(self, market: str, side: str, volume: float, price: float) -> dict: ...
 
 # preprocessor.py
 class DataPreprocessor:
@@ -215,7 +241,10 @@ class FactorLoadings:
 |-----|------|------|
 | FMP | 300/min (Free) | 지수 백오프 + 로컬 캐시 |
 | FRED | 120/min | 배치 요청 + 캐시 |
+| 한국투자증권 | 20/sec | Token bucket + 캐시 |
+| 키움증권 | 5/sec | 큐잉 + 배치 |
 | Binance | 1200/min | 웹소켓 우선 |
+| Upbit | 10/sec (주문), 600/min (시세) | 분리 limiter |
 
 ## 테스트 전략
 

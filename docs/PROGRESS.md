@@ -5,25 +5,29 @@
 ## 전체 진행률
 
 ```
-Phase 1: Data Infrastructure    [          ] 0%
+Phase 1: Data Infrastructure    [██        ] 20%
 Phase 2: Factor Modeling        [          ] 0%
 Phase 3: Regime Classification  [          ] 0%
 Phase 4: Strategy Development   [          ] 0%
 Phase 5: Backtesting           [          ] 0%
 Phase 6: Production            [          ] 0%
 ─────────────────────────────────────────────
-Total Progress                  [          ] 0%
+Total Progress                  [▌         ] 3%
 ```
 
 ## Phase 상세
 
-### Phase 1: Data Infrastructure (0%)
+### Phase 1: Data Infrastructure (20%)
 
 | Task | Status | Notes |
 |------|--------|-------|
-| FMP API 클라이언트 | ⏳ | - |
-| FRED API 클라이언트 | ⏳ | - |
-| Crypto API 클라이언트 | ⏳ | - |
+| Base Client | ✅ | rate limiter, retry logic |
+| FMP API 클라이언트 | ✅ | 미국 주식 |
+| FRED API 클라이언트 | 🔄 | 거시경제 지표 |
+| 한국투자증권 API | ⏳ | 국내 주식 |
+| 키움증권 API | ⏳ | 국내 주식 |
+| Binance API | ⏳ | 글로벌 암호화폐 |
+| Upbit API | ⏳ | 국내 암호화폐 |
 | 데이터 전처리 파이프라인 | ⏳ | - |
 | 로컬 캐싱 시스템 | ⏳ | - |
 
@@ -84,10 +88,22 @@ Total Progress                  [          ] 0%
 - 프로젝트 초기화
 - PRD, TECH-SPEC, PROGRESS 문서 생성
 - Phase 구조 설정
+- 프로젝트 기본 구조 생성 (src/, tests/, config/)
+- requirements.txt, pyproject.toml 작성
+- Base Client 구현 (rate limiting, retry logic)
+- FMP API 클라이언트 구현 시작
 
 ## 다음 작업
 
-1. [ ] Phase 1 세부 문서 생성 (`docs/phases/phase-1/`)
-2. [ ] 프로젝트 기본 구조 생성 (`src/`, `tests/`, `config/`)
-3. [ ] requirements.txt 작성
-4. [ ] FMP API 클라이언트 개발 시작
+1. [x] Phase 1 세부 문서 생성 (`docs/phases/phase-1/`)
+2. [x] 프로젝트 기본 구조 생성 (`src/`, `tests/`, `config/`)
+3. [x] requirements.txt 작성
+4. [x] Base Client 구현
+5. [x] FMP API 클라이언트 구현
+6. [ ] FRED API 클라이언트 구현
+7. [ ] 한국투자증권 API 클라이언트 구현
+8. [ ] 키움증권 API 클라이언트 구현
+9. [ ] Binance API 클라이언트 구현
+10. [ ] Upbit API 클라이언트 구현
+11. [ ] 데이터 전처리 파이프라인
+12. [ ] 캐싱 시스템

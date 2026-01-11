@@ -1,106 +1,92 @@
 # Phase 1: Data Infrastructure
 
 ## 목표
-FMP, FRED, 암호화폐 API 클라이언트 구현 및 데이터 전처리 파이프라인 구축
+
+주식, 암호화폐, 거시경제 데이터를 수집하고 전처리하는 견고한 데이터 인프라 구축
 
 ## 범위
 
 ### 포함
-- API 클라이언트 (FMP, FRED, Binance/Upbit)
-- Rate Limiting 및 재시도 로직
-- 데이터 전처리 및 정제
+- FMP API 클라이언트 (주식 데이터)
+- FRED API 클라이언트 (거시경제 지표)
+- Crypto API 클라이언트 (Binance/Upbit)
+- 데이터 전처리 파이프라인
 - 로컬 캐싱 시스템
 
 ### 제외
-- 실시간 스트리밍 데이터
-- 고빈도 데이터 처리
+- 실시간 스트리밍 (Phase 6)
+- 브로커 연동 (Phase 6)
 
-## 기술 상세
+## 기술 요구사항
 
-### FMP Client
+### FMP API 클라이언트
 ```python
 class FMPClient:
-    BASE_URL = "https://financialmodelingprep.com/api/v3"
-
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.session = requests.Session()
-        self.rate_limiter = RateLimiter(calls=300, period=60)
-
-    def get_stock_price(self, symbol: str, start: date, end: date) -> pd.DataFrame:
-        """조정 종가 포함 OHLCV 데이터 반환"""
-
-    def get_fundamentals(self, symbol: str) -> dict:
-        """재무제표 데이터 반환"""
+    - get_historical_prices(symbol, start, end)
+    - get_financial_statements(symbol)
+    - get_company_profile(symbol)
+    - rate_limit: 300 requests/min
 ```
 
-### FRED Client
+### FRED API 클라이언트
 ```python
 class FREDClient:
-    BASE_URL = "https://api.stlouisfed.org/fred"
-
-    # 주요 시리즈 ID
-    SERIES = {
-        "gdp": "GDP",
-        "unemployment": "UNRATE",
-        "yield_10y": "DGS10",
-        "yield_2y": "DGS2",
-        "cpi": "CPIAUCSL",
-    }
+    - get_series(series_id, start, end)
+    - get_series_info(series_id)
+    - 주요 지표: GDP, UNRATE, T10Y2Y, FEDFUNDS
 ```
 
-### Data Preprocessor
+### Crypto API 클라이언트
 ```python
-class DataPreprocessor:
-    """퀀트 작업의 50%+ 차지"""
+class BinanceClient:
+    - get_klines(symbol, interval, start, end)
+    - get_ticker(symbol)
 
-    def handle_missing(self, df: pd.DataFrame, method: str = "ffill") -> pd.DataFrame:
-        """결측치 처리: forward fill, interpolation"""
-
-    def adjust_corporate_actions(self, df: pd.DataFrame, actions: pd.DataFrame) -> pd.DataFrame:
-        """주식 분할, 배당 조정"""
-
-    def handle_outliers(self, df: pd.DataFrame, method: str = "winsorize", threshold: float = 3.0) -> pd.DataFrame:
-        """이상치 처리: winsorization, z-score"""
+class UpbitClient:
+    - get_candles(market, interval, count)
 ```
 
-### Cache System
-```python
-class DataCache:
-    def __init__(self, cache_dir: str = ".cache"):
-        self.cache_dir = Path(cache_dir)
+### 데이터 전처리
+- 결측치 처리 (forward fill, interpolation)
+- 이상치 탐지 및 처리
+- 수익률 계산 (단순, 로그)
+- 정규화/표준화
 
-    def get(self, key: str, ttl_days: int = 1) -> Optional[pd.DataFrame]:
-        """캐시에서 데이터 조회"""
+### 캐싱 시스템
+- SQLite 또는 Parquet 기반
+- 캐시 만료 정책 (일별 데이터: 1일, 재무제표: 1주)
+- 캐시 무효화 메커니즘
 
-    def set(self, key: str, data: pd.DataFrame) -> None:
-        """캐시에 데이터 저장"""
-```
+## 성공 기준
 
-## 완료 조건
-
-- [ ] 모든 API 클라이언트 구현 완료
-- [ ] Rate Limiting 테스트 통과
-- [ ] 데이터 전처리 함수 단위 테스트 80%+ 커버리지
-- [ ] 캐싱 시스템 동작 확인
-- [ ] 통합 테스트 통과
+1. 모든 API 클라이언트 단위 테스트 통과
+2. Rate limiting 정상 작동
+3. 캐시 hit/miss 로깅
+4. 최소 3년치 히스토리컬 데이터 수집 가능
 
 ## 의존성
 
-- requests
-- pandas
-- numpy
-- python-dotenv
+- 외부: FMP API Key, FRED API Key, Binance API Key
+- 내부: 없음 (첫 번째 Phase)
 
 ## 예상 산출물
 
 ```
 src/data/
 ├── __init__.py
-├── fmp_client.py
-├── fred_client.py
-├── crypto_client.py
-├── preprocessor.py
-├── cache.py
-└── rate_limiter.py
+├── base_client.py      # 공통 HTTP 클라이언트
+├── fmp_client.py       # FMP API
+├── fred_client.py      # FRED API
+├── binance_client.py   # Binance API
+├── upbit_client.py     # Upbit API
+├── preprocessor.py     # 데이터 전처리
+└── cache.py            # 캐싱 시스템
+
+tests/data/
+├── test_fmp_client.py
+├── test_fred_client.py
+├── test_binance_client.py
+├── test_upbit_client.py
+├── test_preprocessor.py
+└── test_cache.py
 ```
