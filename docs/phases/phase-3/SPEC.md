@@ -1,62 +1,104 @@
-# Phase 3: Regime Classification
+# Phase 3: Regime Classification Specification
 
 ## 목표
-FRED 거시경제 지표를 활용한 경기 사이클 분류
+
+FRED 거시경제 지표를 활용하여 시장 체제(Market Regime)를 분류하고, 체제에 따른 투자 시그널을 생성합니다.
 
 ## 범위
 
-### 포함
-- FRED 지표 처리 (GDP, 실업률, 수익률곡선)
-- 경기 사이클 분류 (확장, 수축, 침체, 회복)
-- 체제 기반 시그널 생성
+### 1. FRED 지표 처리기
 
-### 제외
-- 실시간 체제 예측 모델
-- 딥러닝 기반 분류
+FRED API에서 수집한 거시경제 지표를 가공하여 체제 분류에 사용할 수 있는 형태로 변환합니다.
 
-## 기술 상세
+**주요 지표**:
+- GDP 성장률 (GDPC1)
+- 실업률 (UNRATE)
+- 인플레이션 (CPIAUCSL, PCE)
+- 금리 (FEDFUNDS, DFF)
+- 수익률 곡선 (T10Y2Y, T10Y3M)
+- 산업생산지수 (INDPRO)
+- 소비자심리지수 (UMCSENT)
+- ISM 제조업 PMI (NAPM)
+- 신규 실업수당 청구 (ICSA)
 
-### 경기 사이클 정의
-| 체제 | 특징 | 투자 전략 |
-|------|------|-----------|
-| Expansion | GDP↑, 실업률↓ | 주식 비중↑ |
-| Contraction | GDP↓, 실업률↑ | 방어주, 채권 |
-| Recession | NBER 공식 침체 | 현금, 안전자산 |
-| Recovery | 침체 후 반등 | 경기민감주 |
+**처리 기능**:
+- 시계열 정규화 (z-score)
+- 이동평균 계산
+- 변화율 계산 (MoM, QoQ, YoY)
+- 리세션 지표 생성
 
-### 주요 지표
+### 2. 경기 사이클 분류기
+
+4가지 경기 체제로 분류:
+1. **Expansion (확장기)**: GDP↑, 실업률↓, 금리↑
+2. **Peak (정점)**: GDP 고점, 인플레이션↑, 금리↑
+3. **Contraction (수축기)**: GDP↓, 실업률↑, 금리↓
+4. **Trough (저점)**: GDP 저점, 실업률 고점
+
+**분류 방법**:
+- Rule-based 분류 (전통적 NBER 기준)
+- Hidden Markov Model (HMM)
+- K-means/GMM 클러스터링
+
+### 3. 체제 기반 시그널
+
+체제에 따른 자산 배분 시그널 생성:
+
+| 체제 | 주식 | 채권 | 원자재 | 현금 |
+|------|------|------|--------|------|
+| Expansion | 높음 | 낮음 | 중간 | 낮음 |
+| Peak | 중간 | 중간 | 높음 | 중간 |
+| Contraction | 낮음 | 높음 | 낮음 | 높음 |
+| Trough | 중간 | 중간 | 낮음 | 중간 |
+
+## 기술 명세
+
+### 클래스 구조
+
 ```python
-LEADING_INDICATORS = [
-    "PERMIT",      # 건축 허가
-    "AWHMAN",      # 제조업 근무시간
-    "UMCSENT",     # 소비자 신뢰지수
-]
+class MacroIndicatorProcessor:
+    """거시경제 지표 처리기"""
+    def normalize(self, series): ...
+    def calculate_momentum(self, series): ...
+    def calculate_diffusion_index(self): ...
 
-COINCIDENT_INDICATORS = [
-    "PAYEMS",      # 비농업 고용
-    "INDPRO",      # 산업생산지수
-    "DPCERAM1M",   # 개인소득
-]
+class RegimeClassifier(ABC):
+    """체제 분류기 기본 클래스"""
+    def fit(self, indicators): ...
+    def predict(self, indicators): ...
+    def get_current_regime(self): ...
 
-LAGGING_INDICATORS = [
-    "UNRATE",      # 실업률
-    "CPILFESL",    # 근원 인플레이션
-]
+class RuleBasedClassifier(RegimeClassifier):
+    """규칙 기반 분류기"""
+
+class HMMClassifier(RegimeClassifier):
+    """Hidden Markov Model 분류기"""
+
+class RegimeSignalGenerator:
+    """체제 기반 시그널 생성기"""
+    def generate_allocation_signal(self, regime): ...
+    def generate_risk_signal(self, regime): ...
 ```
 
-## 완료 조건
+### 입력
+- FRED 거시경제 지표 시계열
+- 분류 파라미터 (임계값, 윈도우 크기 등)
 
-- [ ] 지표 처리 파이프라인 구현
-- [ ] 분류 알고리즘 검증
-- [ ] 과거 NBER 사이클과 비교 검증
-- [ ] 단위 테스트 80%+
+### 출력
+- 현재 체제 분류 결과
+- 체제 전환 확률
+- 자산 배분 시그널
+- 리스크 조정 시그널
 
-## 예상 산출물
+## 의존성
 
-```
-src/regime/
-├── __init__.py
-├── indicators.py
-├── classifier.py
-└── signals.py
-```
+- pandas, numpy: 데이터 처리
+- hmmlearn: Hidden Markov Model
+- scikit-learn: 클러스터링
+- FRED API 클라이언트 (Phase 1에서 구현)
+
+## 참고자료
+
+- NBER Business Cycle Dating
+- Hamilton, J.D. (1989). "A New Approach to the Economic Analysis of Nonstationary Time Series"
+- 경기선행지수 (CLI), 경기동행지수 (CCI)
