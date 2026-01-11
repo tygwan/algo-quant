@@ -560,7 +560,7 @@ def show_data_explorer():
     with tab2:
         st.markdown('<div class="chart-title">Macroeconomic Indicators</div>', unsafe_allow_html=True)
 
-        dates = pd.date_range("2020-01-01", periods=48, freq="M")
+        dates = pd.date_range("2020-01-01", periods=48, freq="ME")
         macro_data = pd.DataFrame({
             "GDP Growth (%)": np.random.normal(2.5, 1.0, 48).cumsum() / 10,
             "Unemployment (%)": 4 + np.random.normal(0, 0.5, 48).cumsum() / 5,
@@ -710,7 +710,7 @@ def show_regime_monitor():
         st.markdown('</div>', unsafe_allow_html=True)
 
     with tab2:
-        dates = pd.date_range("2020-01-01", periods=48, freq="M")
+        dates = pd.date_range("2020-01-01", periods=48, freq="ME")
         regime_values = np.random.choice([0, 1, 2, 3], 48, p=[0.5, 0.2, 0.15, 0.15])
         regime_names = ["Expansion", "Peak", "Contraction", "Trough"]
 
