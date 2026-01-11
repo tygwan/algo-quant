@@ -9,10 +9,10 @@ Phase 1: Data Infrastructure    [██████████] 100%
 Phase 2: Factor Modeling        [██████████] 100%
 Phase 3: Regime Classification  [██████████] 100%
 Phase 4: Strategy Development   [██████████] 100%
-Phase 5: Backtesting           [          ] 0%
+Phase 5: Backtesting           [██████████] 100%
 Phase 6: Production            [          ] 0%
 ─────────────────────────────────────────────
-Total Progress                  [███████   ] 67%
+Total Progress                  [████████  ] 83%
 ```
 
 ## Phase 상세
@@ -59,13 +59,14 @@ Total Progress                  [███████   ] 67%
 | 체제 적응형 포트폴리오 | ✅ | 체제별 배분, 점진적 전환, 전술적 오버레이 |
 | 리스크 관리 규칙 | ✅ | Position Sizing, VaR, Drawdown, Stop Loss |
 
-### Phase 5: Backtesting (0%)
+### Phase 5: Backtesting (100%) ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
-| 백테스팅 엔진 | ⏳ | - |
-| 성과 지표 | ⏳ | - |
-| Walk-forward 분석 | ⏳ | - |
+| 백테스팅 엔진 | ✅ | 이벤트 기반, 벡터화, 거래비용 모델 |
+| 성과 지표 | ✅ | Sharpe, Sortino, Calmar, VaR, Max DD |
+| Walk-forward 분석 | ✅ | Rolling/Anchored, 파라미터 안정성 |
+| 벤치마크 비교 | ✅ | Alpha, Beta, Information Ratio |
 
 ### Phase 6: Production (0%)
 
@@ -120,10 +121,15 @@ Total Progress                  [███████   ] 67%
 - 체제 적응형 전략 구현 (체제별 배분, 전환 처리)
 - 리스크 관리 구현 (Position Sizing, VaR, Drawdown, Stop Loss)
 - **Phase 4 완료**
+- 백테스팅 엔진 구현 (이벤트 기반, 벡터화)
+- 성과 지표 계산 구현 (Sharpe, Sortino, VaR, Max DD 등)
+- Walk-forward 분석 구현 (Rolling, Anchored)
+- 벤치마크 비교 구현 (Alpha, Beta, Information Ratio)
+- **Phase 5 완료**
 
 ## 다음 작업
 
-### Phase 5: Backtesting
-1. [ ] 백테스팅 엔진
-2. [ ] 성과 지표 계산
-3. [ ] Walk-forward 분석
+### Phase 6: Production (Future)
+1. [ ] 실시간 데이터 파이프라인
+2. [ ] 자동 리밸런싱
+3. [ ] 브로커 연동
