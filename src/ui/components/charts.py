@@ -133,16 +133,10 @@ def create_line_chart(
         hovermode="x unified",
     )
 
-    # Generate aria-label description
-    columns_desc = ", ".join(data.columns.tolist())
-    date_range = f"from {data.index.min().strftime('%Y-%m-%d')} to {data.index.max().strftime('%Y-%m-%d')}" if len(data) > 0 else ""
-    aria_label = f"Line chart showing {columns_desc} {date_range}. {title}" if title else f"Line chart showing {columns_desc} {date_range}"
-
     return dcc.Graph(
         figure=fig,
         config=get_chart_config(),
         style={"height": f"{height}px"},
-        **{"aria-label": aria_label},
     )
 
 
@@ -199,15 +193,10 @@ def create_area_chart(
         hoverlabel=HOVER_STYLE,
     )
 
-    # Generate aria-label
-    name = data.name or "values"
-    aria_label = f"Area chart showing {name}. {title}" if title else f"Area chart showing {name}"
-
     return dcc.Graph(
         figure=fig,
         config=get_chart_config(),
         style={"height": f"{height}px"},
-        **{"aria-label": aria_label},
     )
 
 
@@ -290,15 +279,10 @@ def create_pie_chart(
         showarrow=False,
     )
 
-    # Generate aria-label
-    segments_desc = ", ".join([f"{label}: {value:,.2f}" for label, value in zip(labels, values)])
-    aria_label = f"Pie chart showing {segments_desc}. {title}" if title else f"Pie chart showing {segments_desc}"
-
     return dcc.Graph(
         figure=fig,
         config=get_chart_config(),
         style={"height": f"{height}px"},
-        **{"aria-label": aria_label},
     )
 
 
@@ -415,16 +399,10 @@ def create_bar_chart(
         padding = abs(max_val - min_val) * 0.15 if max_val != min_val else abs(max_val) * 0.15
         fig.update_yaxes(range=[min_val - padding if min_val < 0 else min_val, max_val + padding])
 
-    # Generate aria-label
-    pos_count = sum(1 for v in values if v >= 0)
-    neg_count = len(values) - pos_count
-    aria_label = f"Bar chart with {len(values)} bars ({pos_count} positive, {neg_count} negative). {title}" if title else f"Bar chart with {len(values)} bars ({pos_count} positive, {neg_count} negative)"
-
     return dcc.Graph(
         figure=fig,
         config=get_chart_config(),
         style={"height": f"{height}px"},
-        **{"aria-label": aria_label},
     )
 
 
@@ -525,14 +503,10 @@ def create_histogram(
         hoverlabel=HOVER_STYLE,
     )
 
-    # Generate aria-label
-    aria_label = f"Histogram showing distribution of {len(data)} values. Mean: {mean:.4f}, Std: {std:.4f}. {title}" if title else f"Histogram showing distribution of {len(data)} values. Mean: {mean:.4f}, Std: {std:.4f}"
-
     return dcc.Graph(
         figure=fig,
         config=get_chart_config(),
         style={"height": f"{height}px"},
-        **{"aria-label": aria_label},
     )
 
 
@@ -623,16 +597,10 @@ def create_regime_timeline(
         hoverlabel=HOVER_STYLE,
     )
 
-    # Generate aria-label
-    regime_counts = df["regime"].value_counts().to_dict()
-    regime_desc = ", ".join([f"{k}: {v} periods" for k, v in regime_counts.items()])
-    aria_label = f"Timeline chart showing market regimes. {regime_desc}. {title}" if title else f"Timeline chart showing market regimes. {regime_desc}"
-
     return dcc.Graph(
         figure=fig,
         config=get_chart_config(),
         style={"height": f"{height}px"},
-        **{"aria-label": aria_label},
     )
 
 
@@ -673,14 +641,13 @@ def create_chart_container(
             )
         )
 
-    # Build container with proper ARIA attributes
+    # Build container
     container_attrs = {
         "className": "chart-container",
-        "role": "figure",
     }
 
     if description:
-        container_attrs["aria-label"] = description
+        container_attrs["title"] = description
 
     return html.Div(
         **container_attrs,

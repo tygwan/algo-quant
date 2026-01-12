@@ -70,11 +70,11 @@ def create_navbar(current_page: str = "dashboard") -> html.Div:
                         dcc.Link(
                             className=f"nav-item {'active' if item['id'] == current_page else ''}",
                             href=f"/{item['id']}",
+                            title=f"Navigate to {item['label']}",
                             children=[
                                 html.Span(item["icon"], className="nav-icon"),
                                 html.Span(item["label"]),
                             ],
-                            **{"aria-label": f"Navigate to {item['label']}"},
                         )
                         for item in group["items"]
                     ],
@@ -88,7 +88,6 @@ def create_navbar(current_page: str = "dashboard") -> html.Div:
             html.Div(
                 id="sidebar-overlay",
                 className="sidebar-overlay",
-                **{"aria-hidden": "true"},
             ),
 
             # Sidebar container
@@ -96,7 +95,6 @@ def create_navbar(current_page: str = "dashboard") -> html.Div:
                 id="sidebar",
                 className="sidebar",
                 role="navigation",
-                **{"aria-label": "Main navigation"},
                 children=[
                     # Brand with hamburger toggle for mobile
                     html.Div(
@@ -106,16 +104,12 @@ def create_navbar(current_page: str = "dashboard") -> html.Div:
                             html.Button(
                                 id="sidebar-toggle",
                                 className="sidebar-toggle",
+                                title="Toggle navigation menu",
                                 children=[
                                     html.Span(className="hamburger-line"),
                                     html.Span(className="hamburger-line"),
                                     html.Span(className="hamburger-line"),
                                 ],
-                                **{
-                                    "aria-label": "Toggle navigation menu",
-                                    "aria-expanded": "false",
-                                    "aria-controls": "sidebar",
-                                },
                             ),
                             html.Div("◉", className="sidebar-brand-icon"),
                             html.Div([
@@ -128,7 +122,6 @@ def create_navbar(current_page: str = "dashboard") -> html.Div:
                     # Navigation groups
                     html.Nav(
                         className="nav-container",
-                        **{"aria-label": "Primary navigation"},
                         children=[create_nav_group(group) for group in nav_groups],
                     ),
 
