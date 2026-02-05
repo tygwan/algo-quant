@@ -201,18 +201,18 @@ class FactorStrategy:
         data: pd.DataFrame,
     ) -> pd.Series:
         """Calculate size factor score (small cap premium).
-        
+
         Args:
             data: DataFrame with market_cap column
-            
+
         Returns:
             Size scores by asset
         """
         if "market_cap" not in data.columns:
             return pd.Series(0, index=data.index)
-        
-        # Smaller is better (small cap premium)
-        return data["market_cap"].rank(ascending=True, pct=True)
+
+        # Smaller is better (small cap premium) - rank descending so smaller gets higher rank
+        return data["market_cap"].rank(ascending=False, pct=True)
     
     def calculate_composite_score(
         self,
@@ -280,7 +280,8 @@ class FactorStrategy:
         
         # Convert scores to weights based on method
         if self.weight_method == FactorWeightMethod.RANK:
-            weights = scores.rank(ascending=False)
+            # Higher score should get higher weight, so use ascending rank
+            weights = scores.rank(ascending=True)
             weights = weights / weights.sum()
         
         elif self.weight_method == FactorWeightMethod.ZSCORE:

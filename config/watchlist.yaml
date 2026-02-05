@@ -1,0 +1,88 @@
+# Custom Watchlist Configuration
+# Add your tickers here
+
+# Default watchlist for pipeline
+default:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - META
+  - TSLA
+
+# Tech focused
+tech:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - META
+  - AMD
+  - INTC
+  - CRM
+  - ADBE
+
+# ETFs
+etf:
+  - SPY    # S&P 500
+  - QQQ    # Nasdaq 100
+  - IWM    # Russell 2000
+  - DIA    # Dow Jones
+  - VTI    # Total Market
+  - VEA    # Developed Markets
+  - VWO    # Emerging Markets
+  - BND    # Bonds
+  - GLD    # Gold
+  - TLT    # Long-term Treasury
+
+# Semiconductor
+semiconductor:
+  - NVDA
+  - AMD
+  - INTC
+  - AVGO
+  - QCOM
+  - TSM
+  - ASML
+  - MU
+  - LRCX
+  - AMAT
+
+# Value stocks
+value:
+  - BRK-B
+  - JPM
+  - JNJ
+  - PG
+  - KO
+  - PEP
+  - WMT
+  - XOM
+  - CVX
+  - UNH
+
+# Growth stocks
+growth:
+  - NVDA
+  - TSLA
+  - AMD
+  - SNOW
+  - PLTR
+  - CRWD
+  - NET
+  - DDOG
+  - ZS
+  - PANW
+
+# Korean ADRs (미국 상장 한국 주식)
+korean_adr:
+  - SSNLF  # Samsung (OTC)
+  - LPL    # LG Display
+  - SKM    # SK Telecom
+  - KB     # KB Financial
+  - SHG    # Shinhan Financial
+  - WF     # Woori Financial
+  - KEP    # Korea Electric Power
+  - PKX    # POSCO

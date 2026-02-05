@@ -34,10 +34,31 @@ Start by understanding the current project context, then ask questions one at a 
 
 ## After the Design
 
-**Documentation:**
+**Document Generation Preview (REQUIRED):**
+Once the design is validated, ALWAYS show what will be generated:
+
+```
+📋 Document Generation Preview
+─────────────────────────────────
+✓ docs/plans/YYYY-MM-DD-{topic}-design.md
+✓ docs/PRD.md
+✓ docs/TECH-SPEC.md
+✓ docs/PROGRESS.md
+
+[ Submit ] - 문서 생성 진행
+[ Edit ]   - 디자인 수정 후 다시 확인
+[ Cancel ] - 디자인 문서만 저장
+```
+
+**User Choice Handling:**
+- **Submit**: Generate all development documents using dev-docs-writer
+- **Edit**: Go back to design refinement, show preview again when done
+- **Cancel**: Save design document only, skip full documentation
+
+**Documentation (after Submit):**
 - Write the validated design to `docs/plans/YYYY-MM-DD-<topic>-design.md`
-- Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+- Trigger dev-docs-writer to generate PRD, TECH-SPEC, PROGRESS
+- Commit the documents to git
 
 **Implementation (if continuing):**
 - Ask: "Ready to set up for implementation?"
@@ -52,3 +73,4 @@ Start by understanding the current project context, then ask questions one at a 
 - **Explore alternatives** - Always propose 2-3 approaches before settling
 - **Incremental validation** - Present design in sections, validate each
 - **Be flexible** - Go back and clarify when something doesn't make sense
+- **Always Confirm Before Docs** - ALWAYS show document generation preview and get user confirmation before creating full documentation

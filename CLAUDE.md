@@ -6,16 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **algo-quant** is a quantitative investment automation agent for stocks and cryptocurrencies implementing Fama-French multi-factor models, macroeconomic regime classification, and automated portfolio management in Python 3.11+.
 
-**Current Status**: Phase 1-5 complete (83%). Data infrastructure, factor models, regime classification, strategy development, and backtesting implemented. Streamlit dashboard available.
+**Current Status**: Phase 1-5 complete (83%). End-to-end pipeline working with free data sources. Dash dashboard with live ticker analysis.
 
 ## Quick Start
 
 ```bash
-# 대시보드 실행 (권장)
-uv run --with streamlit --with plotly --with altair streamlit run src/ui/app.py
+# Dash 대시보드 실행 (권장)
+python scripts/run_dashboard.py
+# or: /dashboard
 
-# 또는 명령어 사용
-/dashboard
+# 전체 파이프라인 실행 (데이터 수집 → 팩터 분석 → 레짐 분류 → 백테스트)
+python scripts/run_pipeline.py --watchlist tech --top 10
+
+# 커스텀 티커로 파이프라인 실행
+python scripts/run_pipeline.py --symbols AAPL,MSFT,GOOGL,NVDA
+
+# 데이터 수집 (무료 소스)
+python scripts/collect_data.py index --indices sp500,dow,nasdaq,vix
+python scripts/collect_data.py sectors
+python scripts/collect_data.py factors
 
 # 테스트 실행
 uv run pytest tests/ -v
@@ -23,49 +32,76 @@ uv run pytest tests/ -v
 
 ## Technology Stack
 
-- **Python 3.11+** with pandas, numpy, scipy, scikit-learn
+- **Python 3.11+** with pandas, numpy, scipy, scikit-learn, hmmlearn
 - **Package Manager**: uv (권장) 또는 pip
-- **UI**: Streamlit + Plotly
-- **Data Sources**: FMP API (stocks), FRED API (macro), Binance/Upbit (crypto)
+- **UI**: Dash + Plotly (interactive), Streamlit (legacy)
+- **Free Data Sources**: Yahoo Finance (stocks), Kenneth French Library (FF factors), CBOE (VIX)
+- **Premium Data Sources**: FMP API (stocks), FRED API (macro), Binance/Upbit (crypto)
 
 ## Architecture
 
 ```
 src/
-├── data/          # API clients (FMP, FRED, KIS, Kiwoom, Binance, Upbit)
+├── data/          # API clients (FMP, FRED, YFinance, VIX, Binance, Upbit)
+│   ├── yfinance_client.py   # Free stock data (no API key)
+│   ├── vix_client.py        # CBOE VIX data
+│   ├── collector.py         # Unified data collection
+│   └── cache.py             # Data caching
 ├── factors/       # CAPM, FF3, FF5, factor neutralization
+│   └── ff_data.py           # Kenneth French Data Library
 ├── regime/        # Rule-based, HMM classifiers, signals
+│   └── hmm_classifier.py    # Hidden Markov Model
 ├── strategy/      # Optimizer, factor strategy, regime strategy, risk manager
 ├── backtest/      # Engine, metrics, walk-forward analysis
-└── ui/            # Streamlit dashboard
+└── ui/            # Dash dashboard (live analyzer, factor analysis, backtest)
+    └── layouts/live_analyzer.py  # Real-time ticker analysis
+
+scripts/
+├── run_pipeline.py    # End-to-end quantitative pipeline
+├── run_dashboard.py   # Dash dashboard launcher
+└── collect_data.py    # Data collection CLI
+
+config/
+└── watchlist.yaml     # Predefined ticker watchlists
 ```
 
-## Commands (Slash Commands)
+## CLI Commands
+
+```bash
+# Data Collection (무료 소스, API 키 불필요)
+python scripts/collect_data.py index --indices sp500,dow,nasdaq,vix
+python scripts/collect_data.py sectors
+python scripts/collect_data.py factors
+python scripts/collect_data.py prices AAPL,MSFT --source yfinance
+
+# Pipeline (데이터 수집 → 팩터 분석 → 레짐 분류 → 백테스트)
+python scripts/run_pipeline.py --watchlist tech --top 10
+python scripts/run_pipeline.py --symbols NVDA,AMD,INTC,TSM
+python scripts/run_pipeline.py --start 2020-01-01 --end 2024-12-31
+
+# Dashboard
+python scripts/run_dashboard.py --port 8050
+```
+
+## Slash Commands
 
 | Command | Purpose |
 |---------|---------|
-| `/dashboard` | Streamlit 대시보드 실행 |
+| `/dashboard` | Dash 대시보드 실행 |
 | `/test` | pytest 테스트 실행 |
 | `/backtest` | 백테스트 실행 |
-| `/uv-run <script>` | uv로 스크립트 실행 |
-| `/uv-sync` | 의존성 동기화 |
 | `/phase status` | 현재 Phase 진행률 |
 
-## uv 사용법
+## Watchlists (config/watchlist.yaml)
 
-```bash
-# 의존성 동기화
-uv sync
-
-# 스크립트 실행
-uv run python script.py
-
-# 임시 의존성과 함께 실행
-uv run --with pandas python analyze.py
-
-# Streamlit 앱 실행
-uv run --with streamlit streamlit run src/ui/app.py
-```
+| Watchlist | Description |
+|-----------|-------------|
+| `default` | 주요 대형주 (AAPL, MSFT, GOOGL...) |
+| `tech` | 기술주 (NVDA, AMD, CRM...) |
+| `semiconductor` | 반도체 (NVDA, AMD, INTC, TSM...) |
+| `etf` | 주요 ETF (SPY, QQQ, IWM...) |
+| `value` | 가치주 (BRK-B, JPM, JNJ...) |
+| `growth` | 성장주 (TSLA, SQ, SHOP...) |
 
 ## Development Phases
 
@@ -95,22 +131,40 @@ uv run --with streamlit streamlit run src/ui/app.py
 - Mean-Variance, Minimum Variance, Maximum Sharpe
 - Risk Parity, Equal Weight, Inverse Volatility
 
-## API Configuration
+## Data Sources
 
-Store in `config/api_keys.yaml` (never commit):
+**무료 (API 키 불필요)**:
+- Yahoo Finance (`yfinance`): 주가, 인덱스, 섹터 ETF
+- Kenneth French Library: Fama-French 팩터 데이터
+- CBOE: VIX 데이터
+
+**유료 (API 키 필요)** - `config/api_keys.yaml`:
 ```yaml
 fmp:
-  api_key: "YOUR_FMP_API_KEY"
+  api_key: "YOUR_FMP_API_KEY"     # 재무제표, 상세 주가
 fred:
-  api_key: "YOUR_FRED_API_KEY"
+  api_key: "YOUR_FRED_API_KEY"   # 거시경제 지표
 binance:
   api_key: "YOUR_BINANCE_API_KEY"
   api_secret: "YOUR_BINANCE_SECRET"
 ```
+
+## Live Analyzer (Dashboard)
+
+대시보드의 Live Analyzer 페이지에서:
+1. 티커 입력 (쉼표로 구분: `AAPL, MSFT, NVDA`)
+2. 기간 선택 (1mo ~ 5y)
+3. 분석 유형 선택:
+   - **Price Chart**: 주가 추이
+   - **Returns Distribution**: 수익률 분포
+   - **Correlation Matrix**: 상관관계
+   - **Factor Analysis**: FF5 팩터 노출도
+   - **Risk Metrics**: VaR, CVaR, 변동성
 
 ## References
 
 - [퀀트 투자 강의 (FastCampus)](https://fastcampus.co.kr/fin_online_quant01)
 - [FRED API Docs](https://fred.stlouisfed.org/docs/api/fred/)
 - [FMP API Docs](https://site.financialmodelingprep.com/developer/docs)
-- [uv Documentation](https://docs.astral.sh/uv/)
+- [yfinance Documentation](https://github.com/ranaroussi/yfinance)
+- [Kenneth French Data Library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html)

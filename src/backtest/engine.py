@@ -85,13 +85,15 @@ class Position:
         timestamp: datetime,
     ) -> None:
         """Update position with new trade.
-        
+
         Args:
             quantity_change: Change in quantity (positive = buy)
             price: Trade price
             timestamp: Trade timestamp
         """
         if self.quantity == 0:
+            # Opening new position
+            self.quantity = quantity_change
             self.entry_price = price
             self.entry_date = timestamp
         elif (self.quantity > 0 and quantity_change > 0) or \
@@ -102,6 +104,7 @@ class Position:
             if self.quantity != 0:
                 self.entry_price = total_cost / self.quantity
         else:
+            # Reducing position
             self.quantity += quantity_change
             if self.quantity == 0:
                 self.entry_price = 0

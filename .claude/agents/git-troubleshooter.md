@@ -1,6 +1,6 @@
 ---
 name: git-troubleshooter
-description: Git 문제 해결 전문가. 충돌 해결, 히스토리 복구, 문제 진단 시 사용. "충돌", "conflict", "git 문제", "복구", "revert" 키워드에 반응.
+description: Git 문제 해결 전문가. 충돌 해결, 히스토리 복구, 문제 진단 시 사용. "충돌", "conflict", "git 문제", "git 에러", "git 오류", "복구", "되돌려", "취소해", "실수로", "잘못", "revert", "reset", "undo", "rollback", "git error", "merge failed", "push rejected", "detached HEAD", "stash", "reflog" 키워드에 반응.
 tools: Bash, Read, Grep
 model: sonnet
 ---

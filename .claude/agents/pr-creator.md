@@ -1,6 +1,6 @@
 ---
 name: pr-creator
-description: PR 생성 및 설명 작성 전문가. PR 생성, 템플릿 작성, 관련 문서 연결 시 사용. "PR", "pull request", "머지 요청" 키워드에 반응.
+description: PR 생성 및 설명 작성 전문가. PR 생성, 템플릿 작성, 관련 문서 연결 시 사용. "PR", "PR 만들어", "PR 생성", "풀리퀘", "pull request", "머지 요청", "merge request", "MR", "코드 올려", "리뷰 요청", "review request", "create PR", "open PR" 키워드에 반응.
 tools: Bash, Read, Write, Grep, Glob
 model: sonnet
 ---
@@ -19,6 +19,20 @@ You are a Pull Request creation specialist.
 PR 템플릿은 `~/.claude/commands/git-workflow/PR-TEMPLATE.md` 참조.
 
 ## Workflow
+
+### 0. Repository Verification (CRITICAL)
+
+```bash
+# Verify target repo before PR operations
+REMOTE_URL=$(git remote get-url origin 2>/dev/null)
+echo "Target repository: $REMOTE_URL"
+
+# WARNING: If remote points to cc-initializer, STOP!
+if echo "$REMOTE_URL" | grep -q "cc-initializer"; then
+    echo "WARNING: Remote points to cc-initializer framework!"
+    echo "Fix: git remote set-url origin <your-project-repo-url>"
+fi
+```
 
 ### 1. PR 준비 분석
 

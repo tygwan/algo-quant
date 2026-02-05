@@ -12,6 +12,7 @@ from src.ui.layouts import (
     create_backtest_layout,
     create_portfolio_layout,
 )
+from src.ui.layouts.live_analyzer import create_live_analyzer_layout, register_live_analyzer_callbacks
 from src.ui.state import PAGE_CONFIG
 
 # Initialize app (no Bootstrap theme to avoid CSS conflicts)
@@ -83,6 +84,8 @@ def display_page(pathname):
         content = create_backtest_layout()
     elif page_key == "portfolio":
         content = create_portfolio_layout()
+    elif page_key == "live-analyzer":
+        content = create_live_analyzer_layout()
     else:
         content = create_dashboard_layout()
 
@@ -93,6 +96,7 @@ def display_page(pathname):
 from src.ui.callbacks import register_callbacks
 
 register_callbacks(app)
+register_live_analyzer_callbacks(app)
 
 
 def run_dashboard(debug: bool = True, port: int = 8050):

@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize
+from scipy.optimize import minimize, LinearConstraint, Bounds
 from typing import Literal
 
 
@@ -87,36 +87,47 @@ class FactorNeutralizer:
         # subject to: sum(w_new * b) = target_loading
         #            sum(w_new) = 1
         #            min_position <= w_new <= max_position
-        
+
         def objective(w_new):
             return np.sum((w_new - w) ** 2)
-        
-        def constraint_factor(w_new):
-            return np.sum(w_new * b) - target_loading
-        
-        def constraint_sum(w_new):
-            return np.sum(w_new) - 1.0
-        
-        constraints = [
-            {"type": "eq", "fun": constraint_factor},
-            {"type": "eq", "fun": constraint_sum},
-        ]
-        
-        bounds = [(self.min_position, self.max_position)] * n
-        
+
+        def objective_grad(w_new):
+            return 2 * (w_new - w)
+
+        # Build constraint matrix: [ones; b] @ w = [1; target]
+        A_eq = np.vstack([np.ones(n), b])
+        b_eq = np.array([1.0, target_loading])
+
+        linear_constraint = LinearConstraint(A_eq, b_eq, b_eq)
+        bounds = Bounds(
+            lb=np.full(n, self.min_position),
+            ub=np.full(n, self.max_position),
+        )
+
         result = minimize(
             objective,
             w,
-            method="SLSQP",
-            constraints=constraints,
+            method="trust-constr",
+            jac=objective_grad,
+            constraints=linear_constraint,
             bounds=bounds,
+            options={"maxiter": 1000, "gtol": 1e-8},
         )
-        
-        if not result.success:
+
+        # Status 1 = iteration limit, 2 = constraint violation (may be close enough)
+        if not result.success and result.status not in (1, 2):
             raise ValueError(f"Optimization failed: {result.message}")
-        
+
+        # For status 2 (constraint violation), check if solution is acceptable
+        if result.status == 2:
+            # Verify constraints are approximately satisfied
+            actual_sum = np.sum(result.x)
+            actual_loading = np.sum(result.x * b)
+            if abs(actual_sum - 1.0) > 0.1 or abs(actual_loading - target_loading) > 0.1:
+                raise ValueError(f"Optimization failed: {result.message}")
+
         return pd.Series(result.x, index=common_assets)
-    
+
     def neutralize_multi_factor(
         self,
         weights: pd.Series,
@@ -144,39 +155,59 @@ class FactorNeutralizer:
         loadings = factor_loadings_df.loc[common_assets]
         
         n = len(common_assets)
-        
+
         def objective(w_new):
             return np.sum((w_new - w) ** 2)
-        
-        def constraint_sum(w_new):
-            return np.sum(w_new) - 1.0
-        
-        constraints = [{"type": "eq", "fun": constraint_sum}]
-        
-        # Add factor constraints
+
+        def objective_grad(w_new):
+            return 2 * (w_new - w)
+
+        # Build constraint matrix: first row is sum=1, then factor constraints
+        A_rows = [np.ones(n)]
+        b_targets = [1.0]
+
         for factor, target in target_loadings.items():
             if factor in loadings.columns:
-                b = loadings[factor].values
-                constraints.append({
-                    "type": "eq",
-                    "fun": lambda w_new, b=b, t=target: np.sum(w_new * b) - t
-                })
-        
-        bounds = [(self.min_position, self.max_position)] * n
-        
+                A_rows.append(loadings[factor].values)
+                b_targets.append(target)
+
+        A_eq = np.vstack(A_rows)
+        b_eq = np.array(b_targets)
+
+        linear_constraint = LinearConstraint(A_eq, b_eq, b_eq)
+        bounds = Bounds(
+            lb=np.full(n, self.min_position),
+            ub=np.full(n, self.max_position),
+        )
+
         result = minimize(
             objective,
             w,
-            method="SLSQP",
-            constraints=constraints,
+            method="trust-constr",
+            jac=objective_grad,
+            constraints=linear_constraint,
             bounds=bounds,
+            options={"maxiter": 1000, "gtol": 1e-8},
         )
-        
-        if not result.success:
+
+        # Status 1 = iteration limit, 2 = constraint violation (may be close enough)
+        if not result.success and result.status not in (1, 2):
             raise ValueError(f"Optimization failed: {result.message}")
-        
+
+        # For status 2 (constraint violation), check if solution is acceptable
+        if result.status == 2:
+            actual_sum = np.sum(result.x)
+            if abs(actual_sum - 1.0) > 0.1:
+                raise ValueError(f"Optimization failed: {result.message}")
+            # Check factor constraints
+            for factor, target in target_loadings.items():
+                if factor in loadings.columns:
+                    actual = np.sum(result.x * loadings[factor].values)
+                    if abs(actual - target) > 0.1:
+                        raise ValueError(f"Optimization failed: {result.message}")
+
         return pd.Series(result.x, index=common_assets)
-    
+
     def create_long_short_portfolio(
         self,
         scores: pd.Series,

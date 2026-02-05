@@ -7,32 +7,14 @@ description: Optimize context loading for efficient token usage. Use when workin
 
 Optimize AI context loading for efficient token usage and focused development sessions.
 
-## When to Use This Skill
+## When to Use
 
-Use this skill when:
 - Working with large codebases (>50 files)
-- Context window is approaching limits
+- Context window approaching limits
 - User mentions "context", "token", "optimize"
-- Need to focus on specific subsystem
 - Starting a new development session
 
-## Core Workflow
-
-### Step 1: Analyze Current Context
-
-**Identify loaded files:**
-- Recently read files
-- Referenced documentation
-- Active working files
-
-**Assess relevance:**
-- Current task requirements
-- File dependencies
-- Historical usage patterns
-
-### Step 2: Context Scoring
-
-Score files by relevance (1-10):
+## Context Scoring
 
 | Factor | Weight | Description |
 |--------|--------|-------------|
@@ -41,248 +23,149 @@ Score files by relevance (1-10):
 | Recent access | 20% | Recently read or modified |
 | Reference frequency | 15% | Often referenced in codebase |
 
-### Step 3: Optimization Strategies
+## Optimization Strategies
 
-#### Strategy A: Essential Only
-```
-Load only:
-- Files directly being modified
-- Critical type definitions
-- Immediate dependencies
-Token savings: 60-80%
-```
+| Strategy | Load Scope | Token Savings |
+|----------|-----------|---------------|
+| A: Essential Only | Modified files + type defs + immediate deps | 60-80% |
+| B: Focused Context | Working files + 1-level deps + docs + config | 40-60% |
+| C: Summarized | Full working files + summaries + index | 30-50% |
 
-#### Strategy B: Focused Context
-```
-Load:
-- Working files + 1 level dependencies
-- Relevant documentation
-- Key configuration
-Token savings: 40-60%
-```
+## Document Priority Loading
 
-#### Strategy C: Summarized Context
-```
-Load:
-- Full working files
-- Summaries of related files
-- Index of available resources
-Token savings: 30-50%
-```
+| Priority | Files | When |
+|----------|-------|------|
+| 1 (Always) | `docs/CONTEXT.md`, `docs/PROGRESS.md` | Every session |
+| 2 (Phase) | `docs/phases/phase-N/SPEC.md`, `TASKS.md` | Phase work |
+| 3 (On-Demand) | `docs/PRD.md`, `docs/TECH-SPEC.md`, `src/**/*` | As needed |
 
-## Context Summary Format
+## Token Budget Guidelines
 
-### File Summary Template
-```markdown
-## [filename] Summary
-**Purpose:** [one-line description]
-**Key exports:** [list of main functions/classes]
-**Dependencies:** [key imports]
-**Size:** [lines] lines
-
-### Key Sections
-- [Section 1]: Lines X-Y - [description]
-- [Section 2]: Lines X-Y - [description]
-```
-
-### Project Context Template
-```markdown
-# Project Context Summary
-
-## Architecture
-- Pattern: [MVVM/MVC/etc]
-- Language: [language + version]
-- Framework: [framework details]
-
-## Key Files
-| File | Purpose | Priority |
-|------|---------|----------|
-| file1.cs | Main entry | High |
-| file2.cs | Core logic | High |
-| file3.cs | Utilities | Medium |
-
-## Current Focus
-Working on: [current task]
-Relevant files: [list]
-```
-
-## Output Format
-
-### Context Analysis Report
-```markdown
-## Context Optimization Analysis
-
-### Current Context
-- Files loaded: 25
-- Estimated tokens: ~45,000
-- Utilization: 75%
-
-### Recommended Optimization
-
-**Strategy:** Focused Context
-**Expected savings:** 40%
-
-#### Keep (High Priority)
-- ViewModel.cs - direct modification
-- Model.cs - type definitions
-- Services/*.cs - active dependencies
-
-#### Summarize (Medium Priority)
-- Utils/*.cs - create summaries
-- Helpers/*.cs - create summaries
-
-#### Defer (Low Priority)
-- Tests/*.cs - load on demand
-- Docs/*.md - reference only
-
-### Action
-Apply optimization? [Yes/No]
-```
-
-## Integration with dev-docs-writer
-
-This skill works with the `dev-docs-writer` agent for optimal context management:
-
-### Document Priority Loading
-
-```yaml
-Priority 1 (Always Load):
-  - docs/CONTEXT.md      # Quick reference, architecture snapshot
-  - docs/PROGRESS.md     # Current phase, active tasks
-
-Priority 2 (Phase-Specific):
-  - docs/phases/phase-N/SPEC.md     # Current phase details
-  - docs/phases/phase-N/TASKS.md    # Phase tasks
-  - src/[active-module]/*           # Active development files
-
-Priority 3 (On-Demand):
-  - docs/PRD.md          # Requirements reference
-  - docs/TECH-SPEC.md    # Technical details
-  - src/**/*             # Specific files as needed
-```
-
-### Session Continuity
-
-```markdown
-## Starting a new session:
-
-1. Load: docs/CONTEXT.md
-2. Check: Current phase from PROGRESS.md
-3. Load: Phase-specific files (docs/phases/phase-N/)
-4. Resume: Work from last checkpoint
-```
-
-### Token Budget Guidelines
-
-| Session Type | Token Budget | Loading Strategy |
-|--------------|--------------|------------------|
-| Quick check | ~2K | CONTEXT.md only |
+| Session Type | Budget | Loading Strategy |
+|--------------|--------|------------------|
+| Quick check | ~2K | CONTEXT.md + PROGRESS.md |
 | Standard dev | ~10K | CONTEXT + PROGRESS + active files |
 | Deep dive | ~30K | All docs + relevant source |
 | Full context | ~50K+ | Complete project load |
 
-## Phase-Aware Context Loading
+## Incremental Context Protocol
 
-### 자동 Phase 감지
+Turn-by-turn progressive loading to minimize initial token cost.
 
-```yaml
-# settings.json
-context-optimizer:
-  auto_load_phase_docs: true
-  token_budget:
-    quick: 2000
-    standard: 10000
-    deep: 30000
-    full: 50000
+### Loading Sequence
+
+| Turn | Load | Tokens | Purpose |
+|------|------|--------|---------|
+| 1 | CLAUDE.md (lean) + MANIFEST.md + CONTEXT.md | ~1.1K | User intent detection |
+| 2 | Task-specific files (TASKS.md row + source) | +2-3K | Intent-scoped work |
+| 3+ | On-demand (SPEC, PRD, etc.) | +varies | As referenced |
+
+> Note: `auto_load_phase_docs` deferred until Turn 2.
+
+### Expansion Triggers
+
+| User Intent | Load Target | Budget Impact |
+|-------------|-------------|---------------|
+| Phase 작업 | +phase docs (SPEC, TASKS) | +2-3K |
+| 아키텍처 논의 | +TECH-SPEC + adjacent phase SPECs | +5-8K |
+| 코드 리뷰 | +PRD (requirements) + CHECKLIST | +3-5K |
+| 전체 현황 | +PROGRESS + all phase summaries | +5-10K |
+
+### settings.json Configuration
+
+```json
+{
+  "context-optimizer": {
+    "loading_strategy": "incremental",
+    "initial_budget": 800,
+    "expansion_triggers": {
+      "phase_work": "+phase_docs",
+      "architecture": "+tech_spec+adjacent_phases",
+      "review": "+prd+checklist",
+      "full_status": "+progress+all_phase_summaries"
+    }
+  }
+}
 ```
 
-### Phase 문서 로딩 전략
+## Task-Scoped Context Boundary
 
-```
-Phase 감지 흐름:
-1. PROGRESS.md에서 현재 Phase 확인
-2. 해당 Phase 디렉토리 로드
-3. SPEC.md → 범위 및 요구사항
-4. TASKS.md → 현재 작업 목록
-5. CHECKLIST.md → 완료 체크
-```
+| Level | Scope | Tokens | Contents |
+|-------|-------|--------|----------|
+| 1: Task-Active (default) | Single task | ~3-6K | CONTEXT.md + Task row + source + direct deps |
+| 2: Phase-Full | Full phase | ~8-10K | Level 1 + SPEC.md + CHECKLIST.md |
+| 3: Cross-Phase | Architecture | ~12-15K | Level 2 + adjacent SPEC.md + TECH-SPEC sections |
 
-### Phase별 컨텍스트 템플릿
+### Task Context Format
 
 ```markdown
-# Phase {{N}} Context Summary
+## Task T2-03 Context
+Source: docs/phases/phase-2/TASKS.md (row 3 only)
 
-## 현재 상태
-- Phase: {{PHASE_NAME}}
-- 진행률: {{PROGRESS}}%
-- 활성 Task: {{ACTIVE_TASKS}}
+| ID | Task | Status | Priority | Est |
+|----|------|--------|----------|-----|
+| T2-03 | API endpoint 구현 | 🔄 | P0 | 3h |
 
-## 핵심 파일
-{{PRIORITY_FILES}}
-
-## 현재 작업
-{{CURRENT_WORK}}
-
-## 참조 문서
-- [SPEC.md](docs/phases/phase-{{N}}/SPEC.md)
-- [TASKS.md](docs/phases/phase-{{N}}/TASKS.md)
+Related files: server/src/routes/api.ts, server/src/models/schema.ts
+Dependencies: T2-01 (DB schema), T2-02 (auth middleware)
 ```
 
-### 세션 복구 워크플로우
+## Session Checkpoint Protocol
 
-```
-새 세션 시작 시:
+Auto-save on context threshold (>80% budget) for seamless recovery.
 
-┌─────────────────────┐
-│  CONTEXT.md 로드    │◀─── 필수
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│ PROGRESS.md 확인    │◀─── Phase N 감지
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│ Phase N 문서 로드   │◀─── SPEC + TASKS
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│ 작업 재개           │
-└─────────────────────┘
+### Checkpoint Template
+
+```markdown
+# Session Checkpoint
+Date: {{TIMESTAMP}}
+Phase: {{CURRENT_PHASE}} | Task: {{TASK_ID}} | Progress: {{PHASE_PROGRESS}}%
+
+## State
+- Working on: {{TASK_DESCRIPTION}}
+- Modified: {{FILE_LIST}}
+
+## Decisions / Next / Resume Command
 ```
 
-### 토큰 예산별 Phase 로딩
+Recovery cost: CLAUDE.md (300) + checkpoint (1.6K) = ~2K for instant recovery.
 
-| 예산 | 로드 범위 | 토큰 |
-|------|----------|------|
-| Quick | CONTEXT.md + PROGRESS.md | ~2K |
-| Standard | + 현재 Phase (SPEC, TASKS) | ~10K |
-| Deep | + 인접 Phase + 소스 코드 | ~30K |
-| Full | 모든 Phase + 전체 문서 | ~50K+ |
+## CLAUDE.md Lean Template
 
-## Sprint 통합
+Location: `.claude/templates/CLAUDE.lean.md`
 
-Phase와 Sprint 동시 사용 시:
+| Variable | Source | Example |
+|----------|--------|---------|
+| `{{PROJECT_NAME}}` | DISCOVERY.md | "Resumely" |
+| `{{TECH_STACK}}` | DISCOVERY.md | "Next.js+Supabase" |
+| `{{CURRENT_PHASE}}` | PROGRESS.md | "2" |
+| `{{PHASE_PROGRESS}}` | TASKS.md calc | "60" |
 
-```yaml
-Context Loading Priority:
-  1. CONTEXT.md
-  2. PROGRESS.md
-  3. 현재 Sprint (sprints/sprint-N/)
-  4. 연결된 Phase (phases/phase-N/)
-  5. 소스 코드
+| Format | Tokens | Savings |
+|--------|--------|---------|
+| Standard CLAUDE.md | ~1,700+ | baseline |
+| Lean CLAUDE.md | ~300 | ~82% |
+
+## Agent MANIFEST Pattern
+
+Location: `.claude/agents/MANIFEST.md`
+
+```
+1. MANIFEST.md loaded (~500 tokens, 25 agents × 1 row)
+2. Match user intent → keyword lookup
+3. Load only matched agent file (~1-3K tokens)
+Total: ~1.5-3.5K per invocation vs. ~38K if all loaded
 ```
 
 ## Best Practices
 
-1. **Start Lean**: Load minimum required context
-2. **Expand as Needed**: Add files when referenced
-3. **Summarize Utilities**: Keep only interfaces for helpers
-4. **Cache Summaries**: Reuse context summaries across sessions
-5. **Document Dependencies**: Track what requires what
-6. **Use Phase Documents**: Leverage doc-splitter phase structure
-7. **Update PROGRESS.md**: Record session outcomes for continuity
-8. **Phase-First**: 현재 Phase 문서 우선 로드
-9. **Token Budget**: 세션 유형에 맞는 토큰 예산 설정
+| # | Practice |
+|---|----------|
+| 1 | Start Lean: Ultra-lean CLAUDE.md + MANIFEST only |
+| 2 | Task-First: Scope to current Task, not entire Phase |
+| 3 | Expand Incrementally: Add files only when referenced |
+| 4 | Structured > Prose: Use tables/key-value over paragraphs |
+| 5 | Checkpoint Often: Auto-save before context exhaustion |
+| 6 | Phase-Scoped Loading: Load current Phase docs by default |
+| 7 | Summarize Adjacents: Only SPEC.md from neighboring Phases |
+| 8 | Budget Awareness: Match loading strategy to session type |

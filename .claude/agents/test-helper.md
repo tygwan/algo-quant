@@ -1,6 +1,6 @@
 ---
 name: test-helper
-description: Testing assistant. Helps write unit tests, integration tests, and E2E tests. Analyzes coverage and suggests test cases. Responds to "test", "unit test", "coverage", "testing" keywords.
+description: Testing assistant. Helps write unit tests, integration tests, and E2E tests. Analyzes coverage and suggests test cases. Responds to "test", "테스트", "테스트 작성", "테스트 코드", "unit test", "유닛 테스트", "coverage", "커버리지", "testing", "TDD", "jest", "pytest", "spec", "테스트 실행", "테스트 돌려", "run tests", "write tests", "test cases" keywords.
 tools: Read, Write, Bash, Glob, Grep
 model: sonnet
 ---

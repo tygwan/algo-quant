@@ -31,9 +31,10 @@ class TestPositionSizer:
             volatility=0.20,
             stop_distance=0.05,
         )
-        
-        # Size should be risk_per_trade / stop_distance
-        expected = 0.02 / 0.05
+
+        # Size = risk_per_trade / stop_distance = 0.02 / 0.05 = 0.4
+        # But max_position = 0.20 (default), so size is capped at 0.20
+        expected = min(0.02 / 0.05, sizer.max_position)
         assert abs(size.size - expected) < 0.01
 
     def test_volatility_target(self):
@@ -109,12 +110,15 @@ class TestRiskManager:
 
     def test_check_position_limits(self, risk_mgr):
         """Test position limit checking."""
-        weights = {"AAPL": 0.25, "MSFT": 0.50, "GOOGL": 0.25}  # MSFT exceeds
-        
+        # All positions exceed max_position_size (0.20)
+        weights = {"AAPL": 0.25, "MSFT": 0.50, "GOOGL": 0.25}
+
         violations = risk_mgr.check_position_limits(weights)
-        
-        assert len(violations["exceeded"]) > 0
-        assert "MSFT" in violations["exceeded"][0]
+
+        # All 3 positions should be in exceeded list
+        assert len(violations["exceeded"]) == 3
+        # MSFT has the largest violation (50%)
+        assert any("MSFT" in v for v in violations["exceeded"])
 
     def test_check_sector_limits(self, risk_mgr):
         """Test sector limit checking."""

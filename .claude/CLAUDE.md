@@ -1,109 +1,142 @@
-# CLAUDE.md
+# ultra-cc-init (algo-quant)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **Type**: Claude Code Configuration Framework
+> **Stack**: Markdown + Shell + JSON
+> **Docs**: [.claude/docs/](.claude/docs/)
 
 ## Overview
 
-This is **cc-initializer**, a Claude Code configuration framework for managing AI-assisted development workflows. It provides skills, agents, hooks, and commands that orchestrate documentation, phase-based development, sprint tracking, and quality gates.
+ultra-cc-init 기반 통합 개발 워크플로우 프레임워크.
+Agents, Skills, Hooks, Commands를 유기적으로 연결하여 효율적인 개발 환경을 제공합니다.
 
-This is **not** a traditional application codebase—it's a framework configuration system.
+## Quick Start
 
-## Architecture
+```bash
+# 설정 검증
+/validate --full
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Skills (22)    Commands (6)    Agents (20)    Hooks (5)       │
-│       └─────────────────────┬──────────────────┘               │
-│                             ▼                                   │
-│                       settings.json                             │
-│                             ▼                                   │
-│                     docs/ (standards)                           │
-└─────────────────────────────────────────────────────────────────┘
-```
+# 기능 개발 시작
+/feature start "기능명"
 
-## Primary Commands
+# Sprint 관리
+/sprint start --phase N
 
-| Command | Purpose |
-|---------|---------|
-| `/init [--full\|--quick]` | Initialize/analyze project, create CLAUDE.md |
-| `/feature <start\|progress\|complete>` | Feature development workflow |
-| `/bugfix <start\|analyze\|complete>` | Bug fix workflow with root cause analysis |
-| `/release <prepare\|create\|publish>` | Release management |
-| `/phase <status\|update>` | Phase tracking and management |
-| `/sprint <add\|start\|close>` | Sprint lifecycle management |
-| `/validate [--full\|--fix]` | Configuration validation |
-| `/quality-gate` | Pre-commit/merge/release checks |
-| `/agile-sync` | Synchronize CHANGELOG, README, progress docs |
-
-## Key Configuration
-
-**settings.json** - Central configuration controlling:
-- Hook definitions (PreToolUse, PostToolUse, Notification)
-- Phase/Sprint integration settings
-- Quality gate thresholds
-- Document standard locations
-- Safety settings (dangerous command blocking)
-
-## Document Structure Standard
-
-```
-docs/
-├── PRD.md           # Product requirements
-├── TECH-SPEC.md     # Technical specification
-├── PROGRESS.md      # Integrated progress tracking
-├── CONTEXT.md       # AI context summary
-├── phases/          # Phase-based development
-│   └── phase-N/
-│       ├── SPEC.md
-│       ├── TASKS.md
-│       └── CHECKLIST.md
-├── sprints/         # Sprint tracking (optional)
-└── adr/             # Architecture Decision Records
+# 사용 통계
+/analytics
 ```
 
-## Hook System
-
-Hooks are shell scripts in `hooks/` triggered by tool events:
-
-- **pre-tool-use-safety.sh**: Blocks dangerous commands (rm -rf /, force push to main, DROP TABLE)
-- **phase-progress.sh**: Auto-updates PROGRESS.md when TASKS.md changes
-- **auto-doc-sync.sh**: Syncs README stats on .claude/ changes
-- **post-tool-use-tracker.sh**: Logs tool usage
-
-## Agent System
-
-Agents are specialized AI assistants defined in `agents/`. Key agents:
-- **progress-tracker**: Unified progress tracking with Phase system
-- **phase-tracker**: Phase-specific task and checklist management
-- **dev-docs-writer**: Auto-generates PRD, TECH-SPEC, PROGRESS
-- **branch-manager**: GitHub Flow branch management
-- **commit-helper**: Conventional Commits message generation
-- **pr-creator**: PR creation with templates
-
-## Workflow Integration
-
-The `/feature` workflow demonstrates how components integrate:
+## Component Structure
 
 ```
-/feature start "feature name"
-    └── branch-manager → Git branch
-    └── phase-tracker → Link to Phase task
-    └── /sprint add → Add to current sprint
-    └── progress-tracker → Update PROGRESS.md
-    └── context-optimizer → Load relevant context
-
-/feature complete
-    └── quality-gate → Lint, test, coverage
-    └── phase-tracker → Mark task complete
-    └── commit-helper → Generate commit message
-    └── pr-creator → Create GitHub PR
-    └── agile-sync → Update CHANGELOG
+.claude/
+├── settings.json          # 통합 설정
+├── agents/                # 26 specialized agents
+│   ├── MANIFEST.md
+│   ├── progress-tracker.md
+│   ├── phase-tracker.md
+│   ├── analytics-reporter.md
+│   ├── github-manager.md
+│   └── ...
+├── skills/                # 28+ skills
+│   ├── init/
+│   ├── analytics/
+│   ├── gh/
+│   ├── codex/
+│   └── ...
+├── commands/              # 11 workflow commands
+│   ├── feature.md
+│   ├── bugfix.md
+│   ├── release.md
+│   ├── backtest.md        # project-specific
+│   ├── dashboard.md       # project-specific
+│   └── ...
+├── hooks/                 # 5 automation hooks
+│   ├── phase-progress.sh
+│   ├── pre-tool-use-safety.sh
+│   └── ...
+├── analytics/             # Usage metrics (JSONL)
+├── scripts/               # CLI tools
+│   └── analytics-visualizer.sh
+└── docs/                  # Framework documentation
 ```
 
-## Validation
+## Key Components
 
-Run `/validate --full` to verify configuration integrity:
-- settings.json syntax and required sections
-- Hook file existence and permissions
-- Agent/Skill frontmatter validity
-- Document structure compliance
+| Category | Count | Purpose |
+|----------|-------|---------|
+| Agents | 26 | 전문화된 작업 수행 |
+| Skills | 28+ | 워크플로우 자동화 (Codex 듀얼 AI 포함) |
+| Commands | 11 | 통합 개발 플로우 (프로젝트 전용 포함) |
+| Hooks | 5 | 자동 트리거 작업 |
+
+## Core Workflows
+
+### Feature Development
+```
+/feature start → 개발 → /feature progress → /feature complete
+```
+
+### Sprint Execution
+```
+/sprint start --phase N → Task 선택 → /sprint complete → Phase 업데이트
+```
+
+## Quick Reference
+
+### Primary Skills
+
+| Skill | Usage |
+|-------|-------|
+| `/validate` | 설정 검증 |
+| `/phase` | Phase 관리 |
+| `/sprint` | Sprint 관리 |
+| `/agile-sync` | 문서 동기화 |
+| `/analytics` | 사용 통계 시각화 |
+| `/gh` | GitHub CLI 통합 |
+| `/codex` | Codex CLI 실행 |
+
+### Project-Specific Commands
+
+| Command | Usage |
+|---------|-------|
+| `/backtest` | 백테스트 실행 |
+| `/dashboard` | Dash 대시보드 실행 |
+| `/test` | pytest 테스트 실행 |
+| `/uv-sync` | 의존성 동기화 |
+| `/uv-run` | uv run 명령어 |
+
+### Key Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `progress-tracker` | 전체 진행률 관리 |
+| `phase-tracker` | Phase별 상세 추적 |
+| `dev-docs-writer` | 개발 문서 생성 |
+| `analytics-reporter` | 사용 통계 및 리포트 |
+| `github-manager` | GitHub 통합 |
+| `readme-helper` | README 작성 및 개선 |
+| `agent-writer` | Agent 작성 및 검증 |
+
+## Configuration
+
+핵심 설정: `.claude/settings.json`
+
+```json
+{
+  "phase": { "enabled": true },
+  "sprint": { "enabled": true, "phase_integration": { "enabled": true } },
+  "sync": {
+    "enabled": true,
+    "framework_source": "ultra-cc-init",
+    "preserve_project_customizations": true
+  },
+  "analytics": { "enabled": true },
+  "github": { "enabled": true }
+}
+```
+
+## Links
+
+- [Document Structure](.claude/docs/DOCUMENT-STRUCTURE.md)
+- [Sprint-Phase Integration](.claude/docs/SPRINT-PHASE-INTEGRATION.md)
+- [Settings](.claude/settings.json)

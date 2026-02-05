@@ -8,10 +8,13 @@ while minimizing redundant API calls.
 
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from functools import lru_cache
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _cache_key(*args, ttl_minutes: int = 5, **kwargs) -> str:
@@ -79,15 +82,38 @@ class DataService:
     _MACRO_CACHE_MAXSIZE = 16
     _FACTOR_CACHE_MAXSIZE = 16
 
-    def __init__(self, demo_mode: bool = True):
+    def __init__(self, demo_mode: bool = False):
         self.demo_mode = demo_mode
         self._cache = {}
+        self._yfinance_client = None
+        self._ff_data = None
+
+    def _get_yfinance_client(self):
+        """Lazy load YFinanceClient."""
+        if self._yfinance_client is None:
+            try:
+                from src.data.yfinance_client import YFinanceClient
+                self._yfinance_client = YFinanceClient()
+            except ImportError:
+                logger.warning("YFinanceClient not available, falling back to demo mode")
+                self.demo_mode = True
+        return self._yfinance_client
+
+    def _get_ff_data(self):
+        """Lazy load FFData."""
+        if self._ff_data is None:
+            try:
+                from src.factors.ff_data import FFData
+                self._ff_data = FFData()
+            except ImportError:
+                logger.warning("FFData not available")
+        return self._ff_data
 
     def get_prices(
         self,
         symbols: list[str],
         periods: int = 252,
-        start_date: str = "2023-01-01",
+        start_date: str | None = None,
     ) -> pd.DataFrame:
         """Get price data for symbols with caching.
 
@@ -98,7 +124,7 @@ class DataService:
         Args:
             symbols: List of ticker symbols.
             periods: Number of trading days.
-            start_date: Start date for data.
+            start_date: Start date for data. If None, calculates from periods.
 
         Returns:
             DataFrame with price data indexed by date, columns are symbols.
@@ -107,6 +133,10 @@ class DataService:
             Cache is shared across all DataService instances.
         """
         global _prices_cache
+
+        # Calculate start_date from periods if not provided
+        if start_date is None:
+            start_date = (datetime.now() - timedelta(days=int(periods * 1.5))).strftime("%Y-%m-%d")
 
         cache_key = _cache_key(symbols, periods, start_date, ttl_minutes=5)
 
@@ -121,11 +151,31 @@ class DataService:
         if self.demo_mode:
             result = self._generate_sample_prices(symbols, periods, start_date)
         else:
-            # TODO: Implement real data fetching
-            result = self._generate_sample_prices(symbols, periods, start_date)
+            # Use YFinanceClient for real data
+            result = self._fetch_real_prices(symbols, start_date)
 
         _prices_cache[cache_key] = result
         return result
+
+    def _fetch_real_prices(self, symbols: list[str], start_date: str) -> pd.DataFrame:
+        """Fetch real price data using YFinanceClient."""
+        client = self._get_yfinance_client()
+        if client is None:
+            return self._generate_sample_prices(symbols, 252, start_date)
+
+        try:
+            prices_df = client.get_multiple_prices(
+                symbols=symbols,
+                start=start_date,
+                end=datetime.now().strftime("%Y-%m-%d"),
+            )
+            if prices_df.empty:
+                logger.warning(f"No data returned for {symbols}, using demo data")
+                return self._generate_sample_prices(symbols, 252, start_date)
+            return prices_df
+        except Exception as e:
+            logger.error(f"Error fetching real prices: {e}")
+            return self._generate_sample_prices(symbols, 252, start_date)
 
     def get_returns(
         self,
@@ -234,11 +284,26 @@ class DataService:
         if self.demo_mode:
             result = self._generate_factor_data(periods)
         else:
-            # TODO: Implement FF data fetching
-            result = self._generate_factor_data(periods)
+            result = self._fetch_real_factor_data(periods)
 
         _factor_cache[cache_key] = result
         return result
+
+    def _fetch_real_factor_data(self, periods: int) -> pd.DataFrame:
+        """Fetch real Fama-French factor data."""
+        ff_data = self._get_ff_data()
+        if ff_data is None:
+            return self._generate_factor_data(periods)
+
+        try:
+            start_date = (datetime.now() - timedelta(days=int(periods * 1.5))).strftime("%Y-%m-%d")
+            factors = ff_data.get_ff5_factors(start_date=start_date)
+            if factors.empty:
+                return self._generate_factor_data(periods)
+            return factors.tail(periods)
+        except Exception as e:
+            logger.error(f"Error fetching FF factors: {e}")
+            return self._generate_factor_data(periods)
 
     @classmethod
     def clear_cache(cls) -> None:

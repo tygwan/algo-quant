@@ -1,6 +1,6 @@
 ---
 name: refactor-assistant
-description: Refactoring specialist. Helps improve code structure, reduce duplication, and apply design patterns. Responds to "refactor", "improve code", "clean up", "restructure" keywords.
+description: Refactoring specialist. Helps improve code structure, reduce duplication, and apply design patterns. Responds to "refactor", "리팩토링", "리팩터링", "코드 개선", "코드 정리", "중복 제거", "구조 개선", "improve code", "clean up", "clean code", "restructure", "simplify", "optimize code", "code smell", "DRY", "SOLID" keywords.
 tools: Read, Edit, Glob, Grep
 model: sonnet
 ---

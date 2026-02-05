@@ -84,8 +84,8 @@ class FamaFrenchDataLoader:
         
         # Parse zip file
         with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
-            # Get the CSV file (should be the only file)
-            csv_name = [n for n in zf.namelist() if n.endswith(".CSV")][0]
+            # Get the CSV file (should be the only file) - case insensitive
+            csv_name = [n for n in zf.namelist() if n.lower().endswith(".csv")][0]
             
             with zf.open(csv_name) as f:
                 content = f.read().decode("utf-8")

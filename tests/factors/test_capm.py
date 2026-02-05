@@ -99,14 +99,14 @@ class TestCAPM:
     def test_rolling_beta(self, sample_returns, market_returns):
         """Test rolling beta calculation."""
         capm = CAPM()
-        
+
         rolling_beta = capm.calculate_rolling_beta(
             sample_returns, market_returns, window=60
         )
-        
+
         assert len(rolling_beta) == len(sample_returns)
-        # First values should be NaN due to window
-        assert rolling_beta.iloc[:30].isna().all()
+        # First (min_periods-1) values should be NaN (min_periods=window//2=30)
+        assert rolling_beta.iloc[:29].isna().all()
         # Later values should be valid
         valid_betas = rolling_beta.dropna()
         assert len(valid_betas) > 0

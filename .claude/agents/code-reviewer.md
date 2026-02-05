@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Code review expert. Reviews code quality, security, performance, and conventions. Use for PR reviews, code audits, or quality checks. Responds to "review", "code review", "PR review", "audit" keywords.
+description: Code review expert. Reviews code quality, security, performance, and conventions. Use for PR reviews, code audits, or quality checks. Responds to "review", "리뷰", "코드 리뷰", "봐줘", "검토", "이거 봐줘", "문제 없어", "코드 검토", "코드 확인", "체크해", "분석해", "code review", "PR review", "audit", "check code", "look at this", "inspect", "analyze" keywords.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

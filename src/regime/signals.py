@@ -106,14 +106,22 @@ class RegimeSignalGenerator:
         min_confidence: float = 0.5,
     ):
         """Initialize signal generator.
-        
+
         Args:
             allocations: Custom allocation rules by regime
             risk_levels: Custom risk levels by regime
             min_confidence: Minimum confidence for signals
         """
-        self.allocations = allocations or self.DEFAULT_ALLOCATIONS
-        self.risk_levels = risk_levels or self.DEFAULT_RISK_LEVELS
+        # Merge custom allocations with defaults (custom takes precedence)
+        self.allocations = {**self.DEFAULT_ALLOCATIONS}
+        if allocations:
+            self.allocations.update(allocations)
+
+        # Merge custom risk levels with defaults
+        self.risk_levels = {**self.DEFAULT_RISK_LEVELS}
+        if risk_levels:
+            self.risk_levels.update(risk_levels)
+
         self.min_confidence = min_confidence
     
     def generate_allocation_signal(
@@ -304,8 +312,9 @@ class RegimeSignalGenerator:
                 )
                 portfolio_values.append(portfolio_values[-1] * (1 + period_return))
         
-        # Calculate metrics
-        portfolio_series = pd.Series(portfolio_values[1:], index=common_dates)
+        # Calculate metrics - portfolio_values[0] is initial, [1:] are period values
+        # Skip first date as we calculate returns from period 1 onward
+        portfolio_series = pd.Series(portfolio_values[1:], index=common_dates[1:])
         portfolio_returns = portfolio_series.pct_change().dropna()
         
         total_return = (portfolio_values[-1] / initial_capital) - 1

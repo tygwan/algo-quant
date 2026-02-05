@@ -25,6 +25,11 @@ PAGE_CONFIG = {
         "subtitle": "Real-time portfolio overview and market insights",
         "icon": "◉",
     },
+    "live-analyzer": {
+        "title": "Live Analyzer",
+        "subtitle": "Enter tickers for real-time data and analysis",
+        "icon": "⚡",
+    },
     "data-explorer": {
         "title": "Data Explorer",
         "subtitle": "Explore market data across stocks, macro indicators, and crypto",

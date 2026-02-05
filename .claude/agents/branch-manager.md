@@ -1,6 +1,6 @@
 ---
 name: branch-manager
-description: GitHub Flow 기반 브랜치 및 Remote 관리 전문가. 브랜치 생성/삭제, Remote 설정, 원격 저장소 관리 시 사용. "브랜치", "branch", "remote", "원격", "upstream" 키워드에 반응.
+description: GitHub Flow 기반 브랜치 및 Remote 관리 전문가. 브랜치 생성/삭제, Remote 설정, 원격 저장소 관리 시 사용. "브랜치", "branch", "브랜치 만들어", "새 브랜치", "브랜치 생성", "브랜치 삭제", "브랜치 전환", "checkout", "switch", "remote", "원격", "upstream", "origin", "fetch", "pull", "push", "merge branch", "create branch", "delete branch" 키워드에 반응.
 tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
@@ -34,6 +34,20 @@ You are a branch and remote management specialist following GitHub Flow strategy
 | `hotfix/` | 긴급 수정 |
 | `refactor/` | 리팩토링 |
 | `docs/` | 문서 작업 |
+
+## Pre-check: Repository Verification
+
+```bash
+# Verify remote before push/pull operations
+REMOTE_URL=$(git remote get-url origin 2>/dev/null)
+echo "Remote origin: $REMOTE_URL"
+
+# Warn if remote points to cc-initializer (framework source)
+if echo "$REMOTE_URL" | grep -q "cc-initializer"; then
+    echo "WARNING: Remote points to cc-initializer framework!"
+    echo "Set your project remote: git remote set-url origin <your-repo-url>"
+fi
+```
 
 ## Workflow
 

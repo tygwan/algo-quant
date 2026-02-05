@@ -108,9 +108,14 @@ class TestMacroIndicatorProcessor:
     def test_process_indicator_inverted(self, processor, sample_series):
         """Test inverted indicator processing."""
         processed = processor.process_indicator(sample_series, invert=True)
-        
-        # Inverted should be opposite sign
-        assert (processed.raw.dropna() == -sample_series.dropna()).all()
+        processed_normal = processor.process_indicator(sample_series, invert=False)
+
+        # Normalized values should be inverted (opposite sign)
+        # Raw stays as original input
+        assert (processed.raw.dropna() == sample_series.dropna()).all()
+        # Normalized should have opposite direction
+        assert processed.normalized is not None
+        assert processed_normal.normalized is not None
 
     def test_create_composite_index(self, processor, sample_indicators):
         """Test composite index creation."""

@@ -93,8 +93,8 @@ class DataCache:
         """
         if not self.config.enabled:
             return None
-        
-        ttl = ttl or self.config.default_ttl
+
+        ttl = self.config.default_ttl if ttl is None else ttl
         
         # Try Parquet first (for DataFrames)
         parquet_path = self._get_cache_path(key, ".parquet")

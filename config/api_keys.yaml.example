@@ -12,6 +12,11 @@ fred:
   api_key: "YOUR_FRED_API_KEY"
   # Get your key at: https://fred.stlouisfed.org/docs/api/api_key.html
 
+# ===== 경제 캘린더 및 뉴스 =====
+finnhub:
+  api_key: "YOUR_FINNHUB_API_KEY"
+  # Get your key at: https://finnhub.io/ (free tier: 60 calls/min)
+
 # ===== 국내 주식 =====
 kis:
   app_key: "YOUR_KIS_APP_KEY"

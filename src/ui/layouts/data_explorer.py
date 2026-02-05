@@ -13,7 +13,7 @@ from src.ui.services import DataService
 
 def create_data_explorer_layout() -> html.Div:
     """Create data explorer page layout."""
-    service = DataService(demo_mode=True)
+    service = DataService(demo_mode=False)
 
     # Get sample data
     crypto_prices = service.get_prices(["BTC", "ETH", "BNB"], periods=365, start_date="2024-01-01")
@@ -105,7 +105,7 @@ def create_stocks_tab() -> html.Div:
 
 def create_macro_tab() -> html.Div:
     """Create macro indicators tab content."""
-    service = DataService(demo_mode=True)
+    service = DataService(demo_mode=False)
     macro_data = service.get_macro_data(48)
 
     return html.Div([
@@ -129,7 +129,7 @@ def create_macro_tab() -> html.Div:
 
 def create_crypto_tab() -> html.Div:
     """Create cryptocurrency tab content."""
-    service = DataService(demo_mode=True)
+    service = DataService(demo_mode=False)
     crypto_prices = service.get_prices(["BTC", "ETH", "BNB"], periods=365, start_date="2024-01-01")
     crypto_prices = crypto_prices * 300
 

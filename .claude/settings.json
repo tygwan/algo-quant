@@ -120,15 +120,39 @@
   "context-optimizer": {
     "enabled": true,
     "auto_load_phase_docs": true,
+    "loading_strategy": "incremental",
+    "initial_budget": 800,
+    "claude_md_template": "lean",
+    "agent_manifest": ".claude/agents/MANIFEST.md",
+    "checkpoint": {
+      "enabled": true,
+      "threshold_percent": 80,
+      "output_dir": "docs/sessions"
+    },
     "token_budget": {
       "quick": 2000,
       "standard": 10000,
       "deep": 30000,
       "full": 50000
+    },
+    "expansion_triggers": {
+      "phase_work": "+phase_docs",
+      "architecture": "+tech_spec+adjacent_phases",
+      "review": "+prd+checklist",
+      "full_status": "+progress+all_phase_summaries"
+    },
+    "context_boundary": {
+      "default": "task-active",
+      "levels": {
+        "task-active": "current_task+related_source",
+        "phase-full": "task-active+spec+checklist",
+        "cross-phase": "phase-full+adjacent_specs+tech_spec"
+      }
     }
   },
   "documents": {
     "standard_locations": {
+      "discovery": "docs/DISCOVERY.md",
       "progress": "docs/PROGRESS.md",
       "context": "docs/CONTEXT.md",
       "prd": "docs/PRD.md",
@@ -139,6 +163,79 @@
       "sprints": "docs/sprints/"
     }
   },
+  "discovery": {
+    "enabled": true,
+    "require_before_docs": true,
+    "conversation_style": "friendly",
+    "auto_confirm": false,
+    "complexity_thresholds": {
+      "LOW": 3,
+      "MEDIUM": 6,
+      "HIGH": 10
+    }
+  },
+  "sync": {
+    "enabled": true,
+    "framework_source": "ultra-cc-init",
+    "merge_strategy": {
+      "agents": "add_missing",
+      "skills": "add_missing",
+      "commands": "add_missing",
+      "hooks": "add_missing",
+      "settings": "deep_merge"
+    },
+    "preserve_project_customizations": true,
+    "backup_before_sync": true,
+    "core_components": {
+      "agents": [
+        "file-explorer", "tech-spec-writer", "progress-tracker", "phase-tracker",
+        "doc-generator", "project-analyzer", "code-reviewer", "doc-splitter",
+        "test-helper", "git-troubleshooter", "google-searcher", "prd-writer",
+        "dev-docs-writer", "config-validator", "pr-creator", "commit-helper",
+        "doc-validator", "work-unit-manager", "branch-manager", "refactor-assistant",
+        "project-discovery", "analytics-reporter", "github-manager",
+        "readme-helper", "agent-writer",
+        "MANIFEST"
+      ],
+      "skills": [
+        "init", "validate", "sprint", "agile-sync", "brainstorming",
+        "context-optimizer", "feedback-loop", "hook-creator", "subagent-creator",
+        "skill-creator", "prompt-enhancer", "dev-doc-system", "quality-gate",
+        "sync-fix", "repair", "readme-sync", "analytics", "gh"
+      ],
+      "commands": [
+        "feature", "bugfix", "release", "phase", "git-workflow", "dev-doc-planner"
+      ],
+      "hooks": [
+        "phase-progress.sh", "pre-tool-use-safety.sh", "post-tool-use-tracker.sh",
+        "notification-handler.sh", "auto-doc-sync.sh"
+      ]
+    },
+    "auto_run_validation": true,
+    "report_changes": true
+  },
+  "project": {
+    "_comment": "User's project repo - auto-detected from git remote or manually set",
+    "repo": "",
+    "owner": "",
+    "name": "algo-quant",
+    "default_branch": "main",
+    "auto_detect": true
+  },
+  "update": {
+    "_comment": "ultra-cc-init framework source - NOT your project repo",
+    "enabled": true,
+    "source_locations": [
+      "~/dev/ultra-cc-init",
+      "~/.ultra-cc-init"
+    ],
+    "env_var": "CC_INITIALIZER_PATH",
+    "framework_repo": "https://github.com/tygwan/ultra-cc-init.git",
+    "default_branch": "main",
+    "auto_sync_after_update": true,
+    "show_changelog": true,
+    "require_confirmation": true
+  },
   "safety": {
     "block_dangerous_commands": true,
     "warn_on_sensitive_files": true,
@@ -148,7 +245,7 @@
     "auto_check_on_start": false,
     "strict_mode": false,
     "ignore_patterns": ["*.backup", "*.tmp"],
-    "required_agents": ["progress-tracker", "phase-tracker", "dev-docs-writer"],
+    "required_agents": ["project-discovery", "progress-tracker", "phase-tracker", "dev-docs-writer"],
     "required_hooks": ["phase-progress.sh", "pre-tool-use-safety.sh"],
     "required_skills": ["init", "validate", "sprint", "agile-sync"]
   },
@@ -175,6 +272,44 @@
       "recovery_log": "recovery.log",
       "max_log_size_mb": 1,
       "max_log_files": 5
+    }
+  },
+  "analytics": {
+    "enabled": true,
+    "track_tool_usage": true,
+    "track_agent_calls": true,
+    "track_skill_invocations": true,
+    "metrics_file": ".claude/analytics/metrics.jsonl",
+    "retention_days": 30,
+    "aggregation": {
+      "hourly_rollup": true,
+      "daily_summary": true
+    }
+  },
+  "github": {
+    "enabled": true,
+    "cli_path": "gh",
+    "default_base_branch": "main",
+    "pr": {
+      "auto_assign_reviewers": false,
+      "draft_by_default": false,
+      "template": ".github/PULL_REQUEST_TEMPLATE.md",
+      "squash_merge": true
+    },
+    "issue": {
+      "default_labels": [],
+      "auto_assign": true,
+      "link_to_branch": true
+    },
+    "ci": {
+      "watch_timeout": 600,
+      "auto_rerun_failed": false,
+      "notify_on_failure": true
+    },
+    "release": {
+      "generate_notes": true,
+      "draft_by_default": false,
+      "include_changelog": true
     }
   }
 }

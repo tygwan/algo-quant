@@ -1,6 +1,6 @@
 ---
 name: project-analyzer
-description: Analyze project structure, tech stack, and patterns. Use for initial project understanding, architecture review, or when onboarding to a new codebase. Responds to "analyze project", "project structure", "tech stack" keywords.
+description: Analyze project structure, tech stack, and patterns. Use for initial project understanding, architecture review, or when onboarding to a new codebase. Responds to "analyze project", "프로젝트 분석", "프로젝트 구조", "구조 분석", "아키텍처", "기술 스택", "뭘로 만들었", "어떤 기술", "project structure", "tech stack", "architecture", "codebase overview", "what framework", "what language" keywords.
 tools: Read, Glob, Grep, Bash
 model: haiku
 ---

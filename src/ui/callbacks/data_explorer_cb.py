@@ -65,7 +65,7 @@ def register_data_explorer_callbacks(app):
                     "Please enter valid stock symbols separated by commas."
                 )
 
-            service = DataService(demo_mode=True)
+            service = DataService(demo_mode=False)
             prices = service.get_prices(symbol_list, periods=periods)
 
             if prices.empty:
@@ -98,7 +98,7 @@ def register_data_explorer_callbacks(app):
         if not indicators:
             raise PreventUpdate
 
-        service = DataService(demo_mode=True)
+        service = DataService(demo_mode=False)
         macro_data = service.get_macro_data(48)
 
         # Filter selected indicators
