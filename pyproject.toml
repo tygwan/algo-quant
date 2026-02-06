@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "algo-quant"
-version = "0.1.0"
+version = "0.3.0"
 description = "Quantitative investment automation agent with Fama-French multi-factor models"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -79,4 +79,5 @@ extend-ignore = ["E203", "W503"]
 dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.2.0",
 ]

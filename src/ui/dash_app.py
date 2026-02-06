@@ -47,6 +47,7 @@ app.layout = html.Div(
         dcc.Store(id="store-demo-mode", data=True),
         dcc.Store(id="store-backtest-result"),
         dcc.Store(id="store-portfolio"),
+        dcc.Store(id="store-screened-universe"),
         dcc.Store(id="store-theme", data="dark"),
     ],
 )

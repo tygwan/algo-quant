@@ -18,7 +18,7 @@ class TestMacroIndicatorProcessor:
     @pytest.fixture
     def sample_series(self):
         """Create sample time series."""
-        dates = pd.date_range("2020-01-01", periods=60, freq="M")
+        dates = pd.date_range("2020-01-01", periods=60, freq="ME")
         np.random.seed(42)
         values = np.cumsum(np.random.randn(60)) + 100
         return pd.Series(values, index=dates)
@@ -26,7 +26,7 @@ class TestMacroIndicatorProcessor:
     @pytest.fixture
     def sample_indicators(self):
         """Create sample indicator DataFrame."""
-        dates = pd.date_range("2020-01-01", periods=60, freq="M")
+        dates = pd.date_range("2020-01-01", periods=60, freq="ME")
         np.random.seed(42)
         
         return pd.DataFrame({
@@ -133,7 +133,7 @@ class TestMacroIndicatorProcessor:
 
     def test_detect_yield_curve_inversion(self, processor):
         """Test yield curve inversion detection."""
-        dates = pd.date_range("2020-01-01", periods=20, freq="M")
+        dates = pd.date_range("2020-01-01", periods=20, freq="ME")
         # Create spread that goes from positive to negative
         spread = pd.Series([1.0, 0.8, 0.5, 0.2, 0.0, -0.1, -0.2, -0.3, -0.2, -0.1,
                            0.0, 0.2, 0.5, 0.7, 1.0, 1.2, 1.3, 1.2, 1.0, 0.8], index=dates)
@@ -146,7 +146,7 @@ class TestMacroIndicatorProcessor:
 
     def test_calculate_recession_probability(self, processor):
         """Test recession probability calculation."""
-        dates = pd.date_range("2020-01-01", periods=10, freq="M")
+        dates = pd.date_range("2020-01-01", periods=10, freq="ME")
         spread = pd.Series([2.0, 1.0, 0.5, 0.0, -0.5, -1.0, 0.0, 0.5, 1.0, 1.5], index=dates)
         
         prob = processor.calculate_recession_probability(spread, model="simple")

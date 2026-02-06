@@ -23,7 +23,7 @@ class TestRuleBasedClassifier:
     @pytest.fixture
     def expansion_indicators(self):
         """Create indicators for expansion regime."""
-        dates = pd.date_range("2020-01-01", periods=24, freq="M")
+        dates = pd.date_range("2020-01-01", periods=24, freq="ME")
         return pd.DataFrame({
             "gdp_growth": [3.0] * 24,  # Strong growth
             "unemployment": [4.0] * 24,  # Low unemployment
@@ -36,7 +36,7 @@ class TestRuleBasedClassifier:
     @pytest.fixture
     def contraction_indicators(self):
         """Create indicators for contraction regime."""
-        dates = pd.date_range("2020-01-01", periods=24, freq="M")
+        dates = pd.date_range("2020-01-01", periods=24, freq="ME")
         return pd.DataFrame({
             "gdp_growth": [-1.5] * 24,  # Negative growth
             "unemployment": [8.0] * 24,  # High unemployment
@@ -78,7 +78,7 @@ class TestRuleBasedClassifier:
 
     def test_classify_missing_indicators(self, classifier):
         """Test classification with missing indicators."""
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         sparse_indicators = pd.DataFrame({
             "gdp_growth": [2.0] * 12,  # Only one indicator
         }, index=dates)
@@ -102,7 +102,7 @@ class TestRuleBasedClassifier:
     def test_disable_yield_curve(self):
         """Test classifier without yield curve."""
         classifier = RuleBasedClassifier(use_yield_curve=False)
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         indicators = pd.DataFrame({
             "gdp_growth": [3.0] * 12,
             "unemployment": [4.0] * 12,
@@ -126,7 +126,7 @@ class TestYieldCurveClassifier:
     @pytest.fixture
     def sample_indicators(self):
         """Create sample yield curve data."""
-        dates = pd.date_range("2020-01-01", periods=36, freq="M")
+        dates = pd.date_range("2020-01-01", periods=36, freq="ME")
         # Simulate cycle: steep -> flat -> inverted -> steep
         spreads = list(np.linspace(2.0, 0.0, 12)) + \
                   list(np.linspace(0.0, -0.5, 12)) + \
@@ -138,7 +138,7 @@ class TestYieldCurveClassifier:
 
     def test_classify_steep_curve(self, classifier):
         """Test classification with steep yield curve."""
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         indicators = pd.DataFrame({
             "yield_spread": [2.5] * 12,
         }, index=dates)
@@ -150,7 +150,7 @@ class TestYieldCurveClassifier:
 
     def test_classify_inverted_curve(self, classifier):
         """Test classification with inverted yield curve."""
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         indicators = pd.DataFrame({
             "yield_spread": [-0.5] * 12,
         }, index=dates)
@@ -177,7 +177,7 @@ class TestYieldCurveClassifier:
 
     def test_missing_yield_spread(self, classifier):
         """Test classification without yield spread data."""
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         indicators = pd.DataFrame({
             "gdp_growth": [2.0] * 12,  # No yield_spread
         }, index=dates)

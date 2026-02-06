@@ -46,13 +46,18 @@ htmlcov/
 
 # API keys and secrets
 config/api_keys.yaml
+.env
+.env.*
 *.env
-.env*
+!.env.example
 secrets/
 credentials/
 
 # Data cache
 data/cache/
+data/.cache/
+data/raw/
+data/results/
 *.pkl
 *.parquet
 *.h5
@@ -64,3 +69,9 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+*.Zone.Identifier
+*:Zone.Identifier
+
+# Local tooling artifacts
+.claude/analytics/
+=0.14.6

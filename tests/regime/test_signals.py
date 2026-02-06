@@ -117,7 +117,7 @@ class TestRegimeSignalGenerator:
 
     def test_backtest_signals(self, generator):
         """Test signal backtesting."""
-        dates = pd.date_range("2020-01-01", periods=12, freq="M")
+        dates = pd.date_range("2020-01-01", periods=12, freq="ME")
         
         classifications = pd.DataFrame({
             "regime": ["expansion"] * 6 + ["contraction"] * 6,

@@ -45,6 +45,27 @@ def register_backtest_callbacks(app):
         return create_configure_tab()
 
     @app.callback(
+        Output("universe-input", "value"),
+        [Input("store-screened-universe", "data")],
+        [State("universe-input", "value")],
+        prevent_initial_call=True,
+    )
+    def apply_screened_universe(screened_data, current_value):
+        """Apply screened tickers from Live Analyzer to backtest universe."""
+        if not screened_data:
+            raise PreventUpdate
+
+        tickers = screened_data.get("tickers", [])
+        if not tickers:
+            raise PreventUpdate
+
+        new_value = ",".join(tickers)
+        if new_value == (current_value or ""):
+            raise PreventUpdate
+
+        return new_value
+
+    @app.callback(
         [
             Output("backtest-results-store", "data"),
             Output("backtest-tabs", "value"),
@@ -86,8 +107,8 @@ def register_backtest_callbacks(app):
                     "Please enter valid stock symbols separated by commas."
                 )
 
-            # Generate simulated backtest results
-            service = DataService(demo_mode=True)
+            # Use real market data by default (falls back to sample data on fetch failure)
+            service = DataService(demo_mode=False)
             prices = service.get_prices(symbols, periods=periods)
 
             # Calculate equal weight portfolio returns

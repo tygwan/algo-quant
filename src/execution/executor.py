@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -9,6 +10,7 @@ from typing import Any, Callable, Optional
 
 import pandas as pd
 
+from src.env import load_local_env
 from src.execution.broker import (
     BrokerInterface,
     OrderRequest,
@@ -21,6 +23,7 @@ from src.execution.broker import (
 from src.execution.realtime import (
     RealtimeDataPipeline,
     BinanceStream,
+    FinnhubStockStream,
     StreamConfig,
     StreamType,
     PriceUpdate,
@@ -47,6 +50,7 @@ class ExecutionConfig:
     """Configuration for execution engine."""
     mode: ExecutionMode = ExecutionMode.PAPER
     symbols: list[str] = field(default_factory=list)
+    finnhub_api_key: Optional[str] = None
 
     # Risk settings
     max_position_size: float = 0.20    # 20% max per position
@@ -64,6 +68,16 @@ class ExecutionConfig:
     # Logging
     log_all_trades: bool = True
     save_trade_history: bool = True
+
+
+CRYPTO_QUOTE_SUFFIXES = (
+    "USDT",
+    "USDC",
+    "BUSD",
+    "BTC",
+    "ETH",
+    "BNB",
+)
 
 
 @dataclass
@@ -139,15 +153,37 @@ class ExecutionEngine:
 
         # Setup data pipeline
         if self.config.symbols:
-            stream_config = StreamConfig(
-                symbols=self.config.symbols,
-                stream_type=StreamType.TRADE,
-            )
-            stream = BinanceStream(
-                stream_config,
-                testnet=self.config.mode == ExecutionMode.PAPER
-            )
-            self._pipeline.add_stream("main", stream)
+            crypto_symbols = [
+                s for s in self.config.symbols if self._is_crypto_symbol(s)
+            ]
+            stock_symbols = [
+                s for s in self.config.symbols if not self._is_crypto_symbol(s)
+            ]
+
+            if crypto_symbols:
+                crypto_stream = BinanceStream(
+                    StreamConfig(symbols=crypto_symbols, stream_type=StreamType.TRADE),
+                    testnet=self.config.mode == ExecutionMode.PAPER,
+                )
+                self._pipeline.add_stream("crypto", crypto_stream)
+
+            if stock_symbols:
+                load_local_env()
+                finnhub_api_key = (
+                    self.config.finnhub_api_key
+                    or os.getenv("FINNHUB_API_KEY", "").strip()
+                )
+                if finnhub_api_key:
+                    stock_stream = FinnhubStockStream(
+                        StreamConfig(symbols=stock_symbols, stream_type=StreamType.TRADE),
+                        api_key=finnhub_api_key,
+                    )
+                    self._pipeline.add_stream("stocks", stock_stream)
+                else:
+                    logger.warning(
+                        "Stock symbols provided but FINNHUB_API_KEY is missing; stock realtime stream disabled."
+                    )
+
             await self._pipeline.start()
 
         self._state.is_running = True
@@ -536,3 +572,8 @@ class ExecutionEngine:
                 f"Trade: {record.side} {record.quantity} {record.symbol} "
                 f"@ {record.price:.4f} (PnL: {record.pnl or 'N/A'})"
             )
+
+    @staticmethod
+    def _is_crypto_symbol(symbol: str) -> bool:
+        symbol = symbol.upper()
+        return symbol.endswith(CRYPTO_QUOTE_SUFFIXES)

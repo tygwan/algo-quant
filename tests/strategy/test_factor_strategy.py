@@ -19,7 +19,7 @@ class TestFactorStrategy:
     def sample_returns(self):
         """Create sample returns DataFrame."""
         np.random.seed(42)
-        dates = pd.date_range("2020-01-01", periods=60, freq="M")
+        dates = pd.date_range("2020-01-01", periods=60, freq="ME")
         stocks = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
         
         return pd.DataFrame(
@@ -143,7 +143,7 @@ class TestMultiFactorStrategy:
     def sample_returns(self):
         """Create sample returns DataFrame."""
         np.random.seed(42)
-        dates = pd.date_range("2020-01-01", periods=60, freq="M")
+        dates = pd.date_range("2020-01-01", periods=60, freq="ME")
         stocks = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
         
         return pd.DataFrame(

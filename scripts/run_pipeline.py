@@ -464,6 +464,17 @@ def load_watchlist(name: str = "default") -> list[str]:
     return watchlists[name]
 
 
+def normalize_symbols(raw_symbols: list[str]) -> list[str]:
+    """Normalize symbol arguments from space or comma-separated input."""
+    normalized = []
+    for item in raw_symbols:
+        parts = [part.strip().upper() for part in item.split(",")]
+        normalized.extend([part for part in parts if part])
+
+    # Preserve input order while removing duplicates
+    return list(dict.fromkeys(normalized))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run algo-quant pipeline",
@@ -476,7 +487,11 @@ Examples:
   python scripts/run_pipeline.py --top 30
         """
     )
-    parser.add_argument("--symbols", nargs="+", help="Stock symbols (e.g., AAPL MSFT GOOGL)")
+    parser.add_argument(
+        "--symbols",
+        nargs="+",
+        help="Stock symbols (e.g., AAPL MSFT GOOGL or AAPL,MSFT,GOOGL)",
+    )
     parser.add_argument("--watchlist", "-w", help="Watchlist name from config/watchlist.yaml (default, tech, etf, semiconductor, value, growth)")
     parser.add_argument("--top", type=int, default=20, help="Top N S&P 500 stocks (if no symbols/watchlist)")
     parser.add_argument("--start", default="2020-01-01", help="Start date (YYYY-MM-DD)")
@@ -486,7 +501,7 @@ Examples:
 
     # Get symbols (priority: --symbols > --watchlist > --top)
     if args.symbols:
-        symbols = args.symbols
+        symbols = normalize_symbols(args.symbols)
         logger.info(f"Using command-line symbols: {symbols}")
     elif args.watchlist:
         symbols = load_watchlist(args.watchlist)

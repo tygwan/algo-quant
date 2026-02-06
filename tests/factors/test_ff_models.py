@@ -15,7 +15,7 @@ class TestFamaFrench3:
     def sample_factor_returns(self):
         """Create sample FF3 factor returns."""
         np.random.seed(42)
-        dates = pd.date_range("2020-01-01", periods=100, freq="M")
+        dates = pd.date_range("2020-01-01", periods=100, freq="ME")
         
         return pd.DataFrame({
             "Mkt-RF": np.random.normal(0.005, 0.04, 100),
@@ -108,7 +108,7 @@ class TestFamaFrench5:
     def sample_factor_returns(self):
         """Create sample FF5 factor returns."""
         np.random.seed(42)
-        dates = pd.date_range("2020-01-01", periods=100, freq="M")
+        dates = pd.date_range("2020-01-01", periods=100, freq="ME")
         
         return pd.DataFrame({
             "Mkt-RF": np.random.normal(0.005, 0.04, 100),

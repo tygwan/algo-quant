@@ -1,5 +1,6 @@
 """Broker integration layer for order execution."""
 
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -395,12 +396,12 @@ class BinanceBroker(BrokerInterface):
         self.testnet = testnet
         self._connected = False
         self._client = None
+        self._order_symbol_map: dict[str, str] = {}
 
     async def connect(self) -> bool:
         """Connect to Binance."""
         try:
-            # Import Binance client if available
-            from src.data.binance import BinanceClient
+            from src.data.binance_client import BinanceClient
 
             self._client = BinanceClient(
                 api_key=self.api_key,
@@ -425,17 +426,27 @@ class BinanceBroker(BrokerInterface):
         if not self._client:
             raise RuntimeError("Not connected to Binance")
 
-        account = await self._client.get_account()
+        balances = await asyncio.to_thread(self._client.get_balance)
+        if balances.empty:
+            return AccountInfo(
+                account_id="binance",
+                cash=0.0,
+                buying_power=0.0,
+                portfolio_value=0.0,
+                equity=0.0,
+            )
 
-        # Calculate total values
-        total_btc = float(account.get("totalWalletBalance", 0))
+        usdt = balances[balances["asset"] == "USDT"]
+        cash = float(usdt["free"].iloc[0]) if not usdt.empty else 0.0
+        locked = float(usdt["locked"].iloc[0]) if not usdt.empty else 0.0
 
         return AccountInfo(
-            account_id=str(account.get("accountId", "binance")),
-            cash=total_btc,  # In BTC
-            buying_power=float(account.get("availableBalance", 0)),
-            portfolio_value=total_btc,
-            equity=total_btc,
+            account_id="binance_testnet" if self.testnet else "binance_mainnet",
+            cash=cash,
+            buying_power=cash,
+            # Without quote conversions we can only treat quote-currency balance as portfolio value.
+            portfolio_value=cash + locked,
+            equity=cash + locked,
         )
 
     async def get_positions(self) -> list[PositionInfo]:
@@ -443,17 +454,21 @@ class BinanceBroker(BrokerInterface):
         if not self._client:
             raise RuntimeError("Not connected to Binance")
 
-        balances = await self._client.get_balances()
+        balances = await asyncio.to_thread(self._client.get_balance)
         positions = []
 
-        for balance in balances:
-            quantity = float(balance.get("free", 0)) + float(balance.get("locked", 0))
+        for _, balance in balances.iterrows():
+            asset = str(balance["asset"])
+            quantity = float(balance["total"])
+            if asset == "USDT" or quantity <= 0:
+                continue
+
             if quantity > 0:
                 positions.append(PositionInfo(
-                    symbol=balance["asset"],
+                    symbol=asset,
                     quantity=quantity,
                     avg_cost=0,  # Not available from Binance
-                    market_value=0,  # Would need price data
+                    market_value=0,  # Requires quote conversion
                     unrealized_pnl=0,
                     unrealized_pnl_pct=0,
                 ))
@@ -465,24 +480,41 @@ class BinanceBroker(BrokerInterface):
         if not self._client:
             raise RuntimeError("Not connected to Binance")
 
-        try:
-            result = await self._client.place_order(
-                symbol=order.symbol,
-                side=order.side.value.upper(),
-                order_type=order.order_type.value.upper(),
-                quantity=order.quantity,
-                price=order.limit_price,
-            )
-
+        if order.order_type not in [OrderType.MARKET, OrderType.LIMIT]:
             return OrderResult(
-                order_id=str(result["orderId"]),
-                client_order_id=result.get("clientOrderId", order.client_order_id),
+                order_id="",
+                client_order_id=order.client_order_id,
                 symbol=order.symbol,
                 side=order.side,
-                status=self._map_status(result["status"]),
-                quantity=float(result["origQty"]),
-                filled_quantity=float(result["executedQty"]),
-                average_price=float(result.get("avgPrice", 0)),
+                status=OrderStatus.REJECTED,
+                quantity=order.quantity,
+                message=f"Order type {order.order_type.value} is not supported by BinanceClient adapter",
+            )
+
+        try:
+            result = await asyncio.to_thread(
+                self._client.create_order,
+                order.symbol,
+                order.side.value.upper(),
+                order.quantity,
+                order.limit_price,
+                order.order_type.value.upper(),
+            )
+            order_id = str(result.get("order_id", ""))
+            if order_id:
+                self._order_symbol_map[order_id] = order.symbol
+            status = self._map_status(str(result.get("status", "")))
+            filled_qty = order.quantity if status in [OrderStatus.FILLED, OrderStatus.PARTIAL] else 0.0
+
+            return OrderResult(
+                order_id=order_id,
+                client_order_id=order.client_order_id,
+                symbol=order.symbol,
+                side=order.side,
+                status=status,
+                quantity=float(result.get("quantity", order.quantity)),
+                filled_quantity=filled_qty,
+                average_price=float(result.get("price", 0) or 0),
                 commission=0,  # Would need to query fills
             )
         except Exception as e:
@@ -502,7 +534,18 @@ class BinanceBroker(BrokerInterface):
             return False
 
         try:
-            await self._client.cancel_order(order_id)
+            symbol = self._order_symbol_map.get(order_id)
+            if not symbol:
+                for order in await self.get_open_orders():
+                    if order.order_id == order_id:
+                        symbol = order.symbol
+                        break
+
+            if not symbol:
+                logger.warning(f"Cannot cancel order {order_id}: symbol not found")
+                return False
+
+            await asyncio.to_thread(self._client.cancel_order, symbol, int(order_id))
             return True
         except Exception as e:
             logger.error(f"Failed to cancel order: {e}")
@@ -514,18 +557,12 @@ class BinanceBroker(BrokerInterface):
             return None
 
         try:
-            result = await self._client.get_order(order_id)
-            return OrderResult(
-                order_id=str(result["orderId"]),
-                client_order_id=result.get("clientOrderId", ""),
-                symbol=result["symbol"],
-                side=OrderSide(result["side"].lower()),
-                status=self._map_status(result["status"]),
-                quantity=float(result["origQty"]),
-                filled_quantity=float(result["executedQty"]),
-                average_price=float(result.get("avgPrice", 0)),
-            )
-        except Exception:
+            for order in await self.get_open_orders():
+                if order.order_id == str(order_id):
+                    return order
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get order {order_id}: {e}")
             return None
 
     async def get_open_orders(self) -> list[OrderResult]:
@@ -534,20 +571,34 @@ class BinanceBroker(BrokerInterface):
             return []
 
         try:
-            orders = await self._client.get_open_orders()
-            return [
-                OrderResult(
-                    order_id=str(o["orderId"]),
-                    client_order_id=o.get("clientOrderId", ""),
-                    symbol=o["symbol"],
-                    side=OrderSide(o["side"].lower()),
-                    status=self._map_status(o["status"]),
-                    quantity=float(o["origQty"]),
-                    filled_quantity=float(o["executedQty"]),
+            orders = await asyncio.to_thread(self._client.get_open_orders)
+            if orders.empty:
+                return []
+
+            results = []
+            for _, order in orders.iterrows():
+                order_id = str(order["order_id"])
+                symbol = str(order["symbol"])
+                self._order_symbol_map[order_id] = symbol
+
+                side_raw = str(order["side"]).upper()
+                side = OrderSide.BUY if side_raw == "BUY" else OrderSide.SELL
+
+                results.append(
+                    OrderResult(
+                        order_id=order_id,
+                        client_order_id="",
+                        symbol=symbol,
+                        side=side,
+                        status=self._map_status(str(order["status"])),
+                        quantity=float(order["quantity"]),
+                        filled_quantity=float(order["filled"]),
+                        average_price=float(order["price"]),
+                    )
                 )
-                for o in orders
-            ]
-        except Exception:
+            return results
+        except Exception as e:
+            logger.error(f"Failed to fetch open orders: {e}")
             return []
 
     def _map_status(self, binance_status: str) -> OrderStatus:

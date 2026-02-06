@@ -5,7 +5,7 @@
 [![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)]()
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Progress](https://img.shields.io/badge/Progress-100%25-brightgreen.svg)]()
+[![Progress](https://img.shields.io/badge/Progress-91%25-yellow.svg)]()
 
 ## 개요
 
@@ -25,6 +25,7 @@ algo-quant는 **국내/해외 주식 + 암호화폐**를 대상으로 한 통합
 | 카테고리 | 데이터 소스 | 기능 |
 |----------|-------------|------|
 | 미국 주식 | FMP API | 가격, 재무제표, 기업 프로필 |
+| 미국 주식 (실시간) | Finnhub WebSocket | 실시간 체결 데이터 스트림 |
 | 한국 주식 | 한국투자증권 (KIS) | 시세, 주문, 잔고 조회 |
 | 한국 주식 | 키움증권 | 시세, 주문, 조건검색 |
 | 거시경제 | FRED API | GDP, 실업률, 금리, 수익률곡선 |
@@ -60,6 +61,16 @@ cp config/api_keys.yaml.example config/api_keys.yaml
 
 # api_keys.yaml 파일을 편집하여 API 키 입력
 ```
+
+```bash
+# 미국주식 실시간 스트림(Finnhub)용 .env 생성
+cp .env.example .env
+
+# .env 파일에서 FINNHUB_API_KEY 값을 실제 키로 교체
+```
+
+- `.env`는 Git에 커밋되지 않도록 기본 `.gitignore`에 포함되어 있습니다.
+- 실수로 키를 외부(채팅/로그/스크린샷)에 노출했다면 즉시 재발급(rotate)하세요.
 
 ## 프로젝트 구조
 
@@ -111,6 +122,7 @@ uv run python -m src.ui.dash_app
 ### 대시보드 기능
 
 - **Dashboard**: 포트폴리오 현황, 핵심 지표
+- **Live Analyzer**: Historical/Realtime 모드, Quant Screener
 - **Data Explorer**: 주식/암호화폐/거시경제 데이터 탐색
 - **Factor Analysis**: Fama-French 팩터 분석
 - **Regime Monitor**: 경기 체제 모니터링
@@ -118,6 +130,13 @@ uv run python -m src.ui.dash_app
 - **Portfolio**: 포트폴리오 관리 및 최적화
 
 ## 사용법
+
+### 오프라인 페이퍼 트레이딩 데모
+
+```bash
+# API 키/네트워크 없이 동작하는 SMA 기반 페이퍼 트레이딩 시연
+uv run python scripts/demo_paper_trading.py --symbol AAPL --steps 120 --ma-window 20
+```
 
 ### 기본 예제
 
@@ -178,12 +197,12 @@ Phase 2: Factor Modeling        [██████████] 100%
 Phase 3: Regime Classification  [██████████] 100%
 Phase 4: Strategy Development   [██████████] 100%
 Phase 5: Backtesting           [██████████] 100%
-Phase 6: Production            [██████████] 100%
+Phase 6: Production            [█████░░░░░] 47%
 ─────────────────────────────────────────────
-Total Progress                  [██████████] 100%
+Total Progress                  [█████████░] 91%
 ```
 
-### 완료된 기능
+### 구현/진행 기능
 
 | Phase | 주요 기능 |
 |-------|----------|
@@ -192,7 +211,7 @@ Total Progress                  [██████████] 100%
 | Phase 3 | FRED 지표 처리, HMM 체제 분류기, 시그널 생성 |
 | Phase 4 | 포트폴리오 최적화 (Mean-Variance, Risk Parity), 체제 적응형 전략 |
 | Phase 5 | 백테스팅 엔진, Walk-forward 분석, 벤치마크 비교 |
-| Phase 6 | WebSocket 실시간 데이터, 자동 리밸런싱, 브로커 연동 |
+| Phase 6 | 실시간 스트림/리밸런서/브로커 어댑터/페이퍼 실행엔진 구현, 실거래 검증 및 알림 시스템 진행 중 |
 
 ### UI 기술 스택
 

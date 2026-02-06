@@ -330,6 +330,145 @@ class BinanceStream(DataStream):
         return streams
 
 
+class FinnhubStockStream(DataStream):
+    """Finnhub WebSocket stream for US equities."""
+
+    BASE_URL = "wss://ws.finnhub.io"
+
+    def __init__(self, config: StreamConfig, api_key: str):
+        super().__init__(config)
+        self.api_key = api_key
+        self._ws = None
+        self._reconnect_count = 0
+
+    @property
+    def url(self) -> str:
+        return f"{self.BASE_URL}?token={self.api_key}"
+
+    async def connect(self) -> None:
+        """Connect to Finnhub WebSocket and subscribe."""
+        if not self.api_key:
+            raise ValueError("Finnhub API key is required for stock real-time stream")
+
+        try:
+            import websockets
+
+            self._ws = await websockets.connect(self.url)
+            self._connected = True
+            self._reconnect_count = 0
+            logger.info("Connected to Finnhub WebSocket")
+            await self.subscribe(self.config.symbols)
+
+        except ImportError:
+            logger.error("websockets package is required for Finnhub stream")
+            raise
+        except Exception as e:
+            logger.error(f"Finnhub connection failed: {e}")
+            self._connected = False
+            raise
+
+    async def disconnect(self) -> None:
+        """Disconnect from Finnhub WebSocket."""
+        if self._ws:
+            await self._ws.close()
+            self._ws = None
+        self._connected = False
+        self._running = False
+        logger.info("Disconnected from Finnhub WebSocket")
+
+    async def subscribe(self, symbols: list[str]) -> None:
+        """Subscribe to ticker symbols."""
+        if not self._ws:
+            return
+
+        for symbol in symbols:
+            await self._ws.send(
+                json.dumps({"type": "subscribe", "symbol": symbol.upper()})
+            )
+            if symbol.upper() not in self._buffer:
+                self._buffer[symbol.upper()] = deque(maxlen=self.config.buffer_size)
+
+    async def unsubscribe(self, symbols: list[str]) -> None:
+        """Unsubscribe ticker symbols."""
+        if not self._ws:
+            return
+
+        for symbol in symbols:
+            await self._ws.send(
+                json.dumps({"type": "unsubscribe", "symbol": symbol.upper()})
+            )
+
+    async def start(self) -> None:
+        """Start receiving stock trade data."""
+        self._running = True
+
+        while self._running:
+            try:
+                if not self._connected:
+                    await self._reconnect()
+
+                if not self._ws:
+                    await asyncio.sleep(self.config.reconnect_delay)
+                    continue
+
+                msg = await asyncio.wait_for(
+                    self._ws.recv(),
+                    timeout=self.config.update_interval * 4,
+                )
+                await self._handle_message(json.loads(msg))
+
+            except asyncio.TimeoutError:
+                continue
+            except Exception as e:
+                logger.error(f"Finnhub stream error: {e}")
+                self._connected = False
+                await asyncio.sleep(self.config.reconnect_delay)
+
+    async def _reconnect(self) -> None:
+        """Attempt to reconnect."""
+        if self._reconnect_count >= self.config.max_reconnect_attempts:
+            logger.error("Max Finnhub reconnection attempts reached")
+            self._running = False
+            return
+
+        self._reconnect_count += 1
+        logger.info(
+            f"Finnhub reconnecting ({self._reconnect_count}/{self.config.max_reconnect_attempts})..."
+        )
+        try:
+            await self.connect()
+        except Exception as e:
+            logger.error(f"Finnhub reconnection failed: {e}")
+            await asyncio.sleep(self.config.reconnect_delay)
+
+    async def _handle_message(self, msg: dict[str, Any]) -> None:
+        """Handle incoming Finnhub message."""
+        # Finnhub trade payload: {"type":"trade","data":[{"s":"AAPL","p":..,"v":..,"t":..}, ...]}
+        if msg.get("type") != "trade":
+            return
+
+        for trade in msg.get("data", []):
+            symbol = str(trade.get("s", "")).upper()
+            if not symbol:
+                continue
+
+            try:
+                update = PriceUpdate(
+                    symbol=symbol,
+                    price=float(trade.get("p", 0)),
+                    volume=float(trade.get("v", 0)),
+                    timestamp=datetime.fromtimestamp(float(trade.get("t", 0)) / 1000.0),
+                )
+            except Exception:
+                continue
+
+            if symbol not in self._buffer:
+                self._buffer[symbol] = deque(maxlen=self.config.buffer_size)
+
+            self._buffer[symbol].append(update)
+            await self._notify_callbacks(update)
+
+
 class RealtimeDataPipeline:
     """Manages multiple data streams and aggregates data."""
 

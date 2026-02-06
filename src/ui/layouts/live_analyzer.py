@@ -1,14 +1,15 @@
-"""Live Stock Analyzer - Interactive ticker input and analysis."""
+"""Live Stock Analyzer - interactive ticker input and streaming analysis."""
 
-from dash import html, dcc, callback, Input, Output, State
-import dash_bootstrap_components as dbc
+from dash import html, dcc, Input, Output, State, callback_context, no_update
+from dash.exceptions import PreventUpdate
 import plotly.graph_objects as go
 import plotly.express as px
-from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
-from datetime import date, timedelta
 import logging
+from typing import Any
+
+from src.ui.services.realtime_hub import get_realtime_market_hub
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,8 @@ def create_live_analyzer_layout() -> html.Div:
         # Header
         html.Div([
             html.H2("Live Stock Analyzer", style={"color": "var(--text-primary)", "marginBottom": "0.5rem"}),
-            html.P("Enter tickers to fetch real-time data and run analysis",
+            html.P("Enter tickers to fetch historical/realtime data and run quant analysis "
+                   "(US stocks realtime requires FINNHUB_API_KEY)",
                    style={"color": "var(--text-secondary)"}),
         ], style={"marginBottom": "1.5rem"}),
 
@@ -33,7 +35,7 @@ def create_live_analyzer_layout() -> html.Div:
                     children=[
                         # Ticker Input
                         html.Div(
-                            className="col col-4",
+                            className="col col-3",
                             children=[
                                 html.Label("Tickers (space or comma separated)",
                                           style={"color": "var(--text-secondary)", "fontSize": "0.875rem"}),
@@ -52,6 +54,25 @@ def create_live_analyzer_layout() -> html.Div:
                                         "color": "var(--text-primary)",
                                         "fontSize": "1rem",
                                     },
+                                ),
+                            ],
+                        ),
+                        # Data Mode
+                        html.Div(
+                            className="col col-2",
+                            children=[
+                                html.Label("Data Mode",
+                                          style={"color": "var(--text-secondary)", "fontSize": "0.875rem"}),
+                                dcc.Dropdown(
+                                    id="live-data-mode-dropdown",
+                                    options=[
+                                        {"label": "Historical (YFinance)", "value": "historical"},
+                                        {"label": "Realtime Stream", "value": "realtime"},
+                                    ],
+                                    value="historical",
+                                    clearable=False,
+                                    style={"marginTop": "0.5rem"},
+                                    className="dropdown-dark",
                                 ),
                             ],
                         ),
@@ -79,7 +100,7 @@ def create_live_analyzer_layout() -> html.Div:
                         ),
                         # Analysis Type
                         html.Div(
-                            className="col col-3",
+                            className="col col-2",
                             children=[
                                 html.Label("Analysis",
                                           style={"color": "var(--text-secondary)", "fontSize": "0.875rem"}),
@@ -91,6 +112,7 @@ def create_live_analyzer_layout() -> html.Div:
                                         {"label": "Correlation", "value": "correlation"},
                                         {"label": "Factor Analysis", "value": "factor"},
                                         {"label": "Risk Metrics", "value": "risk"},
+                                        {"label": "Quant Screener", "value": "screener"},
                                     ],
                                     value="price",
                                     style={"marginTop": "0.5rem"},
@@ -135,6 +157,13 @@ def create_live_analyzer_layout() -> html.Div:
 
         # Store for data
         dcc.Store(id="live-data-store"),
+        dcc.Store(id="live-stream-config-store"),
+        dcc.Interval(
+            id="live-refresh-interval",
+            interval=3000,  # 3 seconds
+            n_intervals=0,
+            disabled=True,
+        ),
     ])
 
 
@@ -374,120 +403,459 @@ def create_factor_analysis_view(returns_df: pd.DataFrame, ff_factors: pd.DataFra
     ])
 
 
-# Register callbacks
+def _parse_tickers(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    return [t.strip().upper() for t in raw.replace(",", " ").split() if t.strip()]
+
+
+def _fetch_historical_prices(
+    tickers: list[str], period: str
+) -> tuple[pd.DataFrame, list[str]]:
+    from src.data.yfinance_client import YFinanceClient
+
+    yf_client = YFinanceClient()
+    prices_dict = {}
+    failed = []
+
+    for ticker in tickers[:20]:
+        try:
+            df = yf_client.get_historical_prices(ticker, period=period)
+            if not df.empty and "close" in df.columns:
+                prices_dict[ticker] = df["close"]
+            else:
+                failed.append(ticker)
+        except Exception as e:
+            failed.append(ticker)
+            logger.warning(f"Failed to fetch {ticker}: {e}")
+
+    return pd.DataFrame(prices_dict), failed
+
+
+def _create_screener_table(
+    prices_df: pd.DataFrame,
+    returns_df: pd.DataFrame,
+    snapshot_df: pd.DataFrame | None = None,
+) -> html.Div:
+    if prices_df.empty or returns_df.empty:
+        return html.Div(
+            "Not enough data points yet for screening.",
+            style={"color": "var(--text-secondary)"},
+        )
+
+    lookback = min(20, len(prices_df) - 1)
+    if lookback < 2:
+        return html.Div(
+            "Waiting for more tick updates to calculate screener metrics...",
+            style={"color": "var(--text-secondary)"},
+        )
+
+    momentum = prices_df.iloc[-1] / prices_df.iloc[-lookback] - 1
+    volatility = returns_df.tail(lookback).std()
+    sharpe_like = returns_df.tail(lookback).mean() / volatility.replace(0, np.nan)
+    score = (
+        momentum.rank(pct=True).fillna(0) * 0.6
+        + sharpe_like.rank(pct=True).fillna(0) * 0.3
+        + (1 - volatility.rank(pct=True)).fillna(0) * 0.1
+    )
+
+    volume_map = {}
+    source_map = {}
+    if snapshot_df is not None and not snapshot_df.empty:
+        volume_map = {
+            str(row["symbol"]): float(row["volume"])
+            for _, row in snapshot_df.iterrows()
+        }
+        source_map = {
+            str(row["symbol"]): str(row["source"])
+            for _, row in snapshot_df.iterrows()
+        }
+
+    screener = pd.DataFrame(
+        {
+            "Ticker": momentum.index,
+            "Price": prices_df.iloc[-1].values,
+            f"{lookback}-Tick Mom%": momentum.values * 100,
+            f"{lookback}-Tick Vol%": volatility.values * 100,
+            "Sharpe-Like": sharpe_like.values,
+            "Score": score.values,
+            "Volume": [volume_map.get(sym, np.nan) for sym in momentum.index],
+            "Source": [source_map.get(sym, "-") for sym in momentum.index],
+        }
+    ).sort_values("Score", ascending=False)
+
+    screener = screener.head(20)
+    if screener.empty:
+        return html.Div(
+            "No screener candidates yet. Waiting for more updates...",
+            style={"color": "var(--text-secondary)"},
+        )
+
+    def _fmt(value: Any, col: str) -> str:
+        if pd.isna(value):
+            return "-"
+        if col == "Price":
+            return f"{float(value):,.2f}"
+        if "Mom%" in col or "Vol%" in col:
+            return f"{float(value):.2f}%"
+        if col in ("Score", "Sharpe-Like"):
+            return f"{float(value):.3f}"
+        if col == "Volume":
+            return f"{float(value):,.0f}"
+        return str(value)
+
+    rows = []
+    for _, row in screener.iterrows():
+        rows.append({col: _fmt(row[col], col) for col in screener.columns})
+
+    return html.Div(
+        className="chart-container",
+        children=[
+            html.Div("Realtime Quant Screener (Top Ranked)", className="chart-title"),
+            html.Table(
+                className="metrics-table",
+                style={"width": "100%", "borderCollapse": "collapse"},
+                children=[
+                    html.Thead(
+                        html.Tr(
+                            [
+                                html.Th(
+                                    col,
+                                    style={
+                                        "padding": "0.75rem",
+                                        "textAlign": "left",
+                                        "borderBottom": "2px solid var(--border-color)",
+                                        "color": "var(--text-secondary)",
+                                    },
+                                )
+                                for col in rows[0].keys()
+                            ]
+                        )
+                    ),
+                    html.Tbody(
+                        [
+                            html.Tr(
+                                [
+                                    html.Td(
+                                        val,
+                                        style={
+                                            "padding": "0.75rem",
+                                            "borderBottom": "1px solid var(--border-color)",
+                                            "color": "var(--text-primary)",
+                                        },
+                                    )
+                                    for val in row.values()
+                                ]
+                            )
+                            for row in rows
+                        ]
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
+def _screened_universe_from_prices(prices_df: pd.DataFrame, top_n: int = 10) -> list[str]:
+    """Select top symbols by short-horizon momentum for strategy handoff."""
+    if prices_df.empty or len(prices_df) < 3:
+        return []
+
+    lookback = min(20, len(prices_df) - 1)
+    momentum = (prices_df.iloc[-1] / prices_df.iloc[-lookback] - 1).sort_values(
+        ascending=False
+    )
+    return list(momentum.head(top_n).index)
+
+
+def _render_analysis_view(
+    prices_df: pd.DataFrame,
+    analysis_type: str,
+    mode: str,
+    snapshot_df: pd.DataFrame | None = None,
+) -> html.Div:
+    if prices_df.empty:
+        return html.Div(
+            "Waiting for price data...",
+            style={"color": "var(--text-secondary)"},
+        )
+
+    returns_df = prices_df.pct_change().dropna()
+
+    if analysis_type == "price":
+        chart = create_price_chart(prices_df)
+        return html.Div(
+            className="chart-container",
+            children=[
+                html.Div("Normalized Price Chart", className="chart-title"),
+                dcc.Graph(figure=chart, config={"displayModeBar": False}),
+            ],
+        )
+
+    if analysis_type == "returns":
+        if returns_df.empty:
+            return html.Div(
+                "Need more data points for return analysis.",
+                style={"color": "var(--text-secondary)"},
+            )
+        chart = create_returns_chart(returns_df)
+        return html.Div(
+            className="chart-container",
+            children=[
+                html.Div("Cumulative Returns", className="chart-title"),
+                dcc.Graph(figure=chart, config={"displayModeBar": False}),
+            ],
+        )
+
+    if analysis_type == "correlation":
+        if returns_df.empty:
+            return html.Div(
+                "Need more data points for correlation analysis.",
+                style={"color": "var(--text-secondary)"},
+            )
+        chart = create_correlation_heatmap(returns_df)
+        return html.Div(
+            className="chart-container",
+            children=[
+                html.Div("Correlation Matrix", className="chart-title"),
+                dcc.Graph(figure=chart, config={"displayModeBar": False}),
+            ],
+        )
+
+    if analysis_type == "risk":
+        if returns_df.empty:
+            return html.Div(
+                "Need more data points for risk analysis.",
+                style={"color": "var(--text-secondary)"},
+            )
+        return html.Div(
+            className="chart-container",
+            children=[
+                html.Div("Risk Metrics", className="chart-title"),
+                create_risk_metrics_table(returns_df),
+            ],
+        )
+
+    if analysis_type == "factor":
+        if mode == "realtime":
+            return html.Div(
+                className="chart-container",
+                children=[
+                    html.Div("Factor Analysis", className="chart-title"),
+                    html.P(
+                        "Realtime stream is tick-level. Factor analysis requires "
+                        "daily factor data alignment. Switch to Historical mode.",
+                        style={"color": "var(--text-secondary)"},
+                    ),
+                ],
+            )
+        from src.factors.ff_data import FamaFrenchDataLoader
+
+        ff_loader = FamaFrenchDataLoader()
+        ff_factors = ff_loader.load_ff5_factors(frequency="daily")
+        return html.Div(
+            className="chart-container",
+            children=[create_factor_analysis_view(returns_df, ff_factors)],
+        )
+
+    if analysis_type == "screener":
+        return _create_screener_table(prices_df, returns_df, snapshot_df=snapshot_df)
+
+    return html.Div("Unknown analysis type")
+
+
+def _historical_status(prices_df: pd.DataFrame, failed: list[str]) -> html.Div:
+    return html.Div(
+        [
+            html.Span("✓ Historical data loaded", style={"color": "#4ade80"}),
+            html.Span(
+                f" | Source: Yahoo Finance | Tickers: {len(prices_df.columns)} | Rows: {len(prices_df)}",
+                style={"color": "var(--text-secondary)"},
+            ),
+            html.Span(
+                f" | Failed: {', '.join(failed)}",
+                style={"color": "#f87171"},
+            )
+            if failed
+            else None,
+        ]
+    )
+
+
+def _realtime_status(status: dict[str, Any], snapshot_df: pd.DataFrame) -> html.Div:
+    providers = ", ".join(status.get("providers", [])) or "-"
+    tracked = len(snapshot_df) if snapshot_df is not None else 0
+    latest = status.get("latest_update") or "waiting"
+    errors = status.get("errors", [])
+
+    return html.Div(
+        [
+            html.Span(
+                "✓ Realtime stream active" if status.get("running") else "Realtime stream starting...",
+                style={"color": "#4ade80" if status.get("running") else "#facc15"},
+            ),
+            html.Span(
+                f" | Providers: {providers} | Tracked: {tracked} | Last update: {latest}",
+                style={"color": "var(--text-secondary)"},
+            ),
+            html.Span(
+                f" | Warning: {errors[-1]}",
+                style={"color": "#f87171"},
+            )
+            if errors
+            else None,
+        ]
+    )
+
+
 def register_live_analyzer_callbacks(app):
     """Register callbacks for live analyzer."""
 
     @app.callback(
-        [Output("live-results-area", "children"),
-         Output("live-status", "children"),
-         Output("live-data-store", "data")],
-        [Input("live-fetch-btn", "n_clicks")],
-        [State("live-ticker-input", "value"),
-         State("live-period-dropdown", "value"),
-         State("live-analysis-dropdown", "value")],
+        [
+            Output("live-results-area", "children"),
+            Output("live-status", "children"),
+            Output("live-data-store", "data"),
+            Output("live-stream-config-store", "data"),
+            Output("live-refresh-interval", "disabled"),
+            Output("store-screened-universe", "data"),
+        ],
+        [
+            Input("live-fetch-btn", "n_clicks"),
+            Input("live-refresh-interval", "n_intervals"),
+            Input("live-analysis-dropdown", "value"),
+        ],
+        [
+            State("live-ticker-input", "value"),
+            State("live-period-dropdown", "value"),
+            State("live-data-mode-dropdown", "value"),
+            State("live-stream-config-store", "data"),
+        ],
         prevent_initial_call=True,
     )
-    def fetch_and_analyze(n_clicks, tickers_str, period, analysis_type):
-        if not tickers_str:
-            return html.Div(), html.Div("Please enter tickers", style={"color": "#f87171"}), None
+    def fetch_and_analyze(
+        n_clicks,
+        n_intervals,
+        analysis_type,
+        tickers_str,
+        period,
+        data_mode,
+        stream_config,
+    ):
+        del n_clicks, n_intervals
+        trigger = callback_context.triggered_id
+        if not trigger:
+            raise PreventUpdate
 
-        # Parse tickers
-        tickers = [t.strip().upper() for t in tickers_str.replace(",", " ").split() if t.strip()]
+        hub = get_realtime_market_hub()
 
-        if not tickers:
-            return html.Div(), html.Div("No valid tickers", style={"color": "#f87171"}), None
-
-        try:
-            # Import yfinance
-            from src.data.yfinance_client import YFinanceClient
-            yf_client = YFinanceClient()
-
-            # Fetch data
-            prices_dict = {}
-            failed = []
-
-            for ticker in tickers[:10]:  # Limit to 10
-                try:
-                    df = yf_client.get_historical_prices(ticker, period=period)
-                    if not df.empty and 'close' in df.columns:
-                        prices_dict[ticker] = df['close']
-                except Exception as e:
-                    failed.append(ticker)
-                    logger.warning(f"Failed to fetch {ticker}: {e}")
-
-            if not prices_dict:
-                return html.Div(), html.Div("Failed to fetch data for all tickers", style={"color": "#f87171"}), None
-
-            # Create DataFrame
-            prices_df = pd.DataFrame(prices_dict)
-            returns_df = prices_df.pct_change().dropna()
-
-            # Status message
-            status_msg = html.Div([
-                html.Span(f"✓ Loaded {len(prices_dict)} tickers", style={"color": "#4ade80"}),
-                html.Span(f" | {len(prices_df)} days of data", style={"color": "var(--text-secondary)"}),
-                html.Span(f" | Failed: {', '.join(failed)}", style={"color": "#f87171"}) if failed else None,
-            ])
-
-            # Generate analysis based on type
-            if analysis_type == "price":
-                chart = create_price_chart(prices_df)
-                result = html.Div(
-                    className="chart-container",
-                    children=[
-                        html.Div("Normalized Price Chart", className="chart-title"),
-                        dcc.Graph(figure=chart, config={"displayModeBar": False}),
-                    ],
+        if trigger == "live-fetch-btn":
+            tickers = _parse_tickers(tickers_str)
+            if not tickers:
+                return (
+                    html.Div(),
+                    html.Div("Please enter valid tickers", style={"color": "#f87171"}),
+                    None,
+                    None,
+                    True,
+                    no_update,
                 )
 
-            elif analysis_type == "returns":
-                chart = create_returns_chart(returns_df)
-                result = html.Div(
-                    className="chart-container",
-                    children=[
-                        html.Div("Cumulative Returns", className="chart-title"),
-                        dcc.Graph(figure=chart, config={"displayModeBar": False}),
-                    ],
+            if data_mode == "historical":
+                # Explicitly stop stream when user switches to historical mode
+                hub.stop()
+
+                prices_df, failed = _fetch_historical_prices(tickers, period)
+                if prices_df.empty:
+                    return (
+                        html.Div(),
+                        html.Div(
+                            "Failed to fetch historical data for all tickers",
+                            style={"color": "#f87171"},
+                        ),
+                        None,
+                        None,
+                        True,
+                        no_update,
+                    )
+
+                result = _render_analysis_view(
+                    prices_df,
+                    analysis_type=analysis_type,
+                    mode="historical",
                 )
+                status = _historical_status(prices_df, failed)
+                payload = {
+                    "tickers": list(prices_df.columns),
+                    "mode": "historical",
+                    "analysis": analysis_type,
+                }
+                screened = no_update
+                if analysis_type == "screener":
+                    screened = {
+                        "tickers": _screened_universe_from_prices(prices_df),
+                        "mode": "historical",
+                        "updated_at": pd.Timestamp.utcnow().isoformat(),
+                    }
+                return result, status, payload, None, True, screened
 
-            elif analysis_type == "correlation":
-                chart = create_correlation_heatmap(returns_df)
-                result = html.Div(
-                    className="chart-container",
-                    children=[
-                        html.Div("Correlation Matrix", className="chart-title"),
-                        dcc.Graph(figure=chart, config={"displayModeBar": False}),
-                    ],
-                )
+            # Realtime mode
+            start_status = hub.start(tickers)
+            prices_df = hub.get_price_frame(tickers)
+            snapshot_df = hub.get_latest_snapshot(tickers)
+            result = _render_analysis_view(
+                prices_df,
+                analysis_type=analysis_type,
+                mode="realtime",
+                snapshot_df=snapshot_df,
+            )
+            status = _realtime_status(start_status, snapshot_df)
+            stream_payload = {
+                "tickers": tickers,
+                "mode": "realtime",
+                "analysis": analysis_type,
+            }
+            data_payload = {"tickers": tickers, "mode": "realtime"}
+            screened = no_update
+            if analysis_type == "screener":
+                screened = {
+                    "tickers": _screened_universe_from_prices(prices_df),
+                    "mode": "realtime",
+                    "updated_at": pd.Timestamp.utcnow().isoformat(),
+                }
+            return result, status, data_payload, stream_payload, False, screened
 
-            elif analysis_type == "risk":
-                result = html.Div(
-                    className="chart-container",
-                    children=[
-                        html.Div("Risk Metrics", className="chart-title"),
-                        create_risk_metrics_table(returns_df),
-                    ],
-                )
+        if trigger in ("live-refresh-interval", "live-analysis-dropdown"):
+            if not stream_config or stream_config.get("mode") != "realtime":
+                raise PreventUpdate
 
-            elif analysis_type == "factor":
-                # Load FF factors
-                from src.factors.ff_data import FamaFrenchDataLoader
-                ff_loader = FamaFrenchDataLoader()
-                ff_factors = ff_loader.load_ff5_factors(frequency="daily")
+            tickers = stream_config.get("tickers", [])
+            if not tickers:
+                raise PreventUpdate
 
-                result = html.Div(
-                    className="chart-container",
-                    children=[
-                        create_factor_analysis_view(returns_df, ff_factors),
-                    ],
-                )
+            prices_df = hub.get_price_frame(tickers)
+            snapshot_df = hub.get_latest_snapshot(tickers)
+            status = _realtime_status(hub.get_status(), snapshot_df)
+            result = _render_analysis_view(
+                prices_df,
+                analysis_type=analysis_type,
+                mode="realtime",
+                snapshot_df=snapshot_df,
+            )
+            stream_config["analysis"] = analysis_type
+            return (
+                result,
+                status,
+                {"tickers": tickers, "mode": "realtime"},
+                stream_config,
+                False,
+                {
+                    "tickers": _screened_universe_from_prices(prices_df),
+                    "mode": "realtime",
+                    "updated_at": pd.Timestamp.utcnow().isoformat(),
+                }
+                if analysis_type == "screener"
+                else no_update,
+            )
 
-            else:
-                result = html.Div("Unknown analysis type")
-
-            return result, status_msg, {"tickers": list(prices_dict.keys())}
-
-        except Exception as e:
-            logger.error(f"Analysis failed: {e}")
-            return html.Div(), html.Div(f"Error: {str(e)}", style={"color": "#f87171"}), None
+        raise PreventUpdate

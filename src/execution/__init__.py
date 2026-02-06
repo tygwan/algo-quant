@@ -4,6 +4,7 @@ from src.execution.realtime import (
     RealtimeDataPipeline,
     DataStream,
     StreamConfig,
+    FinnhubStockStream,
 )
 from src.execution.rebalancer import (
     AutoRebalancer,
@@ -26,6 +27,7 @@ __all__ = [
     "RealtimeDataPipeline",
     "DataStream",
     "StreamConfig",
+    "FinnhubStockStream",
     # Rebalancer
     "AutoRebalancer",
     "RebalanceConfig",

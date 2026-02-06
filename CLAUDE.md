@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **algo-quant** is a quantitative investment automation agent for stocks and cryptocurrencies implementing Fama-French multi-factor models, macroeconomic regime classification, and automated portfolio management in Python 3.11+.
 
-**Current Status**: Phase 1-5 complete (83%). End-to-end pipeline working with free data sources. Dash dashboard with live ticker analysis.
+**Current Status**: Phase 1-5 complete (100%), Phase 6 in progress (47%). End-to-end pipeline working with free data sources. Dash dashboard with live ticker analysis and paper execution foundation.
 
 ## Quick Start
 
@@ -28,6 +28,9 @@ python scripts/collect_data.py factors
 
 # 테스트 실행
 uv run pytest tests/ -v
+
+# 오프라인 페이퍼 트레이딩 데모 (API 키 불필요)
+uv run python scripts/demo_paper_trading.py --symbol AAPL --steps 120 --ma-window 20
 ```
 
 ## Technology Stack
@@ -112,7 +115,7 @@ python scripts/run_dashboard.py --port 8050
 | 3. Regime Classification | ✅ 100% | Rule-based, HMM, signals |
 | 4. Strategy Development | ✅ 100% | Optimizer, factor/regime strategy |
 | 5. Backtesting | ✅ 100% | Engine, metrics, walk-forward |
-| 6. Production | ⏳ 0% | Real-time, live trading (future) |
+| 6. Production | 🔄 47% | Realtime stream, execution engine, paper broker done; live validation/alerts pending |
 
 ## Key Domain Concepts
 

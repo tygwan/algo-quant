@@ -1,6 +1,6 @@
 # 진행 현황: algo-quant
 
-> 마지막 업데이트: 2026-01-11
+> 마지막 업데이트: 2026-02-05
 
 ## 전체 진행률
 
@@ -10,9 +10,9 @@ Phase 2: Factor Modeling        [██████████] 100%
 Phase 3: Regime Classification  [██████████] 100%
 Phase 4: Strategy Development   [██████████] 100%
 Phase 5: Backtesting           [██████████] 100%
-Phase 6: Production            [██████████] 100%
+Phase 6: Production            [█████░░░░░] 47%
 ─────────────────────────────────────────────
-Total Progress                  [██████████] 100%
+Total Progress                  [█████████░] 91%
 ```
 
 ## Phase 상세
@@ -68,13 +68,15 @@ Total Progress                  [██████████] 100%
 | Walk-forward 분석 | ✅ | Rolling/Anchored, 파라미터 안정성 |
 | 벤치마크 비교 | ✅ | Alpha, Beta, Information Ratio |
 
-### Phase 6: Production (100%) ✅
+### Phase 6: Production (47%) 🔄
 
 | Task | Status | Notes |
 |------|--------|-------|
-| 실시간 데이터 파이프라인 | ✅ | WebSocket 스트리밍, Binance 통합 |
+| 실시간 데이터 파이프라인 | 🔄 | WebSocket 클라이언트/스트림 처리 구현, 영속 저장소 연동 대기 |
 | 자동 리밸런싱 | ✅ | 스케줄/임계값 기반, 점진적 리밸런싱 |
-| 브로커 연동 | ✅ | Paper/Binance 브로커, 주문 실행 엔진 |
+| 브로커 연동 | 🔄 | Paper/Binance 브로커 어댑터 구현, 통합 실거래 검증 대기 |
+| 알림 시스템 | ⏳ | Telegram/Slack/Email 미구현 |
+| 페이퍼 트레이딩 검증 | 🔄 | 시뮬레이션 모드 구현, 장기 검증 대기 |
 
 ## 상태 범례
 
@@ -87,6 +89,15 @@ Total Progress                  [██████████] 100%
 | ⏸️ | 보류 |
 
 ## 최근 변경 사항
+
+### 2026-02-05
+- 진행률 기준 재정렬: Phase 6를 47%(진행 중)로 조정, 전체 91%로 업데이트
+- 문서 정합화: `README.md`, `CLAUDE.md`, `docs/phases/phase-6/*`, `docs/PROGRESS.md` 동기화
+- 실행 계층 안정화: Binance 브로커 어댑터와 `BinanceClient` 인터페이스 정합 수정
+- 테스트 보강: `tests/execution/*` 신규 추가 (broker/realtime/rebalancer/executor)
+- 테스트 경고 정리: 월말 빈도 `M` → `ME`로 변경
+- 데모 준비: `scripts/demo_paper_trading.py` 오프라인 시연 스크립트 추가
+- 실시간 분석 확장: `FinnhubStockStream` + `RealtimeMarketHub` 추가, Live Analyzer 실시간 모드/퀀트 스크리너 구현
 
 ### 2026-01-11
 - 프로젝트 초기화
@@ -135,8 +146,8 @@ Total Progress                  [██████████] 100%
 - 자동 리밸런싱 시스템 구현 (스케줄/임계값 기반)
 - 브로커 연동 레이어 구현 (Paper/Binance)
 - 주문 실행 엔진 구현
-- **Phase 6 완료**
-- **프로젝트 100% 완료**
+- **Phase 6 초기 구현 시작** (실행엔진/리밸런싱/브로커 레이어)
+- **문서상 완료 표기 후, 2026-02-05 기준으로 진행중 상태 재정렬**
 - **UI Migration: Streamlit → Dash**
   - Codex 협업으로 아키텍처 검증
   - Callback 기반 반응형 UI 구현
