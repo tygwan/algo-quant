@@ -1,0 +1,52 @@
+name: "Bug Report"
+description: "Report a defect or regression."
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is failing?
+      placeholder: live-analyzer page fails to render...
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction Steps
+      description: Exact sequence to reproduce.
+      placeholder: |
+        1. Run `uv run python scripts/run_dashboard.py`
+        2. Open /live-analyzer
+        3. Click Analyze
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs Actual
+      placeholder: Expected ..., actual ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Evidence
+      description: Attach traceback, screenshot, or curl output.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      options:
+        - UI / Dash
+        - Data pipeline
+        - Execution / Broker
+        - Backtest / Strategy
+        - Infra / CI
+    validations:
+      required: true

@@ -2,6 +2,8 @@
 
 퀀트 투자 자동화 에이전트 - Fama-French 멀티팩터 모델과 거시경제 체제 분류를 활용한 포트폴리오 관리 시스템
 
+> GitHub Repository Description (recommended): Real-time quant trading research and paper-execution platform for US stocks and crypto, with factor/regime analytics and dashboard-driven screening.
+
 [![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)]()
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -112,8 +114,11 @@ algo-quant/
 Dash 기반 반응형 웹 대시보드를 제공합니다.
 
 ```bash
-# 대시보드 실행
-uv run python -m src.ui.dash_app
+# 대시보드 실행 (통합 CLI)
+uv run aq dashboard --profile dev
+
+# 실시간 데모 프로필
+uv run aq dashboard --profile live
 
 # 브라우저에서 접속
 # http://localhost:8050
@@ -135,7 +140,14 @@ uv run python -m src.ui.dash_app
 
 ```bash
 # API 키/네트워크 없이 동작하는 SMA 기반 페이퍼 트레이딩 시연
-uv run python scripts/demo_paper_trading.py --symbol AAPL --steps 120 --ma-window 20
+uv run aq paper-demo --profile paper --symbol AAPL --steps 120 --ma-window 20
+```
+
+### 파이프라인 실행
+
+```bash
+# 프로필 기본값(top/start)을 사용하는 파이프라인 실행
+uv run aq pipeline --profile paper
 ```
 
 ### 기본 예제
@@ -239,6 +251,7 @@ uv run pytest --cov=src --cov-report=term-missing
 - [PRD (제품 요구사항)](docs/PRD.md)
 - [기술 설계서](docs/TECH-SPEC.md)
 - [진행 현황](docs/PROGRESS.md)
+- [GitHub 기록 운영 가이드](docs/GITHUB_WORKFLOW.md)
 
 ## 참고 자료
 

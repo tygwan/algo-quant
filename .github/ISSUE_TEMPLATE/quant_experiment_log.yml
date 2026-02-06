@@ -1,0 +1,53 @@
+name: "Quant Experiment Log"
+description: "Record a strategy/factor/screener experiment."
+title: "[Experiment] "
+labels: ["experiment"]
+body:
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis
+      description: What edge are you testing?
+      placeholder: Low-vol momentum outperforms pure momentum in high-vol regimes...
+    validations:
+      required: true
+
+  - type: textarea
+    id: setup
+    attributes:
+      label: Setup
+      description: Universe, timeframe, data source, constraints.
+      placeholder: |
+        Universe: S&P 100 + BTC/ETH
+        Data: Finnhub realtime + Binance websocket
+        Rebalance: daily
+    validations:
+      required: true
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Key Metrics
+      description: Return, Sharpe, max drawdown, turnover, hit-rate, etc.
+      placeholder: |
+        CAGR:
+        Sharpe:
+        MDD:
+        Turnover:
+    validations:
+      required: true
+
+  - type: textarea
+    id: result
+    attributes:
+      label: Result & Decision
+      description: Accept/reject and why.
+      placeholder: Adopt for paper-trading phase...
+    validations:
+      required: true
+
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Artifacts
+      description: PR/commit/hash, notebook, chart links.

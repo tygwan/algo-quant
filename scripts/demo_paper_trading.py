@@ -9,10 +9,16 @@ import argparse
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
+import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.config import load_runtime_profile
 from src.execution.broker import OrderSide, PaperBroker
 from src.execution.executor import ExecutionConfig, ExecutionEngine, ExecutionMode
 
@@ -129,17 +135,23 @@ class SmaPaperDemo:
 
 def parse_args() -> DemoConfig:
     parser = argparse.ArgumentParser(description="Run offline paper-trading demo")
-    parser.add_argument("--symbol", default="AAPL", help="Trading symbol")
-    parser.add_argument("--steps", type=int, default=120, help="Number of simulation steps")
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Runtime profile name or YAML path (default: AQ_PROFILE or dev)",
+    )
+    parser.add_argument("--symbol", default=None, help="Trading symbol")
+    parser.add_argument("--steps", type=int, default=None, help="Number of simulation steps")
     parser.add_argument("--initial-price", type=float, default=100.0, help="Initial synthetic price")
     parser.add_argument("--ma-window", type=int, default=20, help="SMA window")
     parser.add_argument("--quantity", type=float, default=1.0, help="Order quantity")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
 
     args = parser.parse_args()
+    profile = load_runtime_profile(args.profile)
     return DemoConfig(
-        symbol=args.symbol.upper(),
-        steps=args.steps,
+        symbol=(args.symbol or profile.paper_symbol).upper(),
+        steps=int(args.steps) if args.steps is not None else int(profile.paper_steps),
         initial_price=args.initial_price,
         ma_window=args.ma_window,
         quantity=args.quantity,

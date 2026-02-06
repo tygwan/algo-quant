@@ -1,4 +1,4 @@
-"""Reusable chart components with dark theme and accessibility features."""
+"""Reusable chart components with accessibility-focused styling."""
 
 from dash import dcc, html
 import plotly.graph_objects as go
@@ -12,12 +12,12 @@ from src.ui.components.theme import COLORS, CHART_COLORS, get_chart_config
 
 # Consistent hover styling for all charts
 HOVER_STYLE = dict(
-    bgcolor="rgba(30, 30, 63, 0.95)",
-    bordercolor="rgba(255, 255, 255, 0.2)",
+    bgcolor="rgba(241, 248, 255, 0.98)",
+    bordercolor=COLORS["border_hover"],
     font=dict(
-        family="Inter, sans-serif",
+        family="Space Grotesk, sans-serif",
         size=13,
-        color="#ffffff",
+        color=COLORS["text"],
     ),
 )
 
@@ -73,7 +73,7 @@ def create_line_chart(
     height: int = 400,
     accessible_colors: bool = False,
 ) -> dcc.Graph:
-    """Create a line chart with dark theme and enhanced accessibility.
+    """Create a line chart with enhanced accessibility.
 
     Args:
         data: DataFrame with datetime index and columns to plot

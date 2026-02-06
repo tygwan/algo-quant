@@ -6,10 +6,12 @@ from .factor_cb import register_factor_callbacks
 from .regime_cb import register_regime_callbacks
 from .backtest_cb import register_backtest_callbacks
 from .portfolio_cb import register_portfolio_callbacks
+from .shell_cb import register_shell_callbacks
 
 
 def register_callbacks(app):
     """Register all callbacks with the app."""
+    register_shell_callbacks(app)
     register_dashboard_callbacks(app)
     register_data_explorer_callbacks(app)
     register_factor_callbacks(app)

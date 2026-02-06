@@ -42,8 +42,11 @@ CRYPTO_QUOTE_SUFFIXES = (
 def _normalize_symbols(symbols: list[str]) -> list[str]:
     normalized = []
     for symbol in symbols:
-        s = symbol.strip().upper()
+        s = symbol.strip().upper().replace(" ", "")
         if s:
+            compact = s.replace("/", "").replace("-", "").replace("_", "")
+            if any(compact.endswith(suffix) for suffix in CRYPTO_QUOTE_SUFFIXES):
+                s = compact
             normalized.append(s)
     # preserve order while deduplicating
     return list(dict.fromkeys(normalized))
@@ -191,6 +194,27 @@ class RealtimeMarketHub:
 
         prices_df = pd.DataFrame(series_map).sort_index().ffill()
         return prices_df.dropna(how="all")
+
+    def get_tick_history(self, symbol: str, max_points: int = 5000) -> pd.DataFrame:
+        """Return raw tick history for one symbol."""
+        normalized = _normalize_symbols([symbol])
+        if not normalized:
+            return pd.DataFrame(columns=["timestamp", "price", "volume", "source"])
+
+        target = normalized[0]
+        with self._lock:
+            history = list(self._history.get(target, []))[-max_points:]
+
+        if not history:
+            return pd.DataFrame(columns=["timestamp", "price", "volume", "source"])
+
+        frame = pd.DataFrame(history)
+        if frame.empty:
+            return pd.DataFrame(columns=["timestamp", "price", "volume", "source"])
+
+        frame = frame.loc[:, ["timestamp", "price", "volume", "source"]]
+        frame = frame.sort_values("timestamp")
+        return frame
 
     def _run_thread(self) -> None:
         """Run async streaming pipeline in a dedicated thread."""

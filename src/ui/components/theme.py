@@ -1,39 +1,39 @@
-"""Dark theme configuration for Dash application."""
+"""Theme configuration for Dash application."""
 
 import plotly.graph_objects as go
 import plotly.io as pio
 
-# Color palette (Claude-inspired dark theme)
+# Color palette (Aurora day-light theme)
 COLORS = {
-    "primary": "#8b5cf6",
-    "primary_hover": "#a78bfa",
-    "secondary": "#6366f1",
-    "success": "#10b981",
+    "primary": "#0F766E",
+    "primary_hover": "#0D9488",
+    "secondary": "#C2410C",
+    "success": "#15803D",
     "warning": "#f59e0b",
     "danger": "#ef4444",
-    "info": "#3b82f6",
-    "background": "#1a1a2e",
-    "background_dark": "#0f0f23",
-    "surface": "rgba(255,255,255,0.03)",
-    "surface_hover": "rgba(255,255,255,0.05)",
-    "border": "rgba(255,255,255,0.06)",
-    "border_hover": "rgba(255,255,255,0.1)",
-    "text": "#ffffff",
-    "text_secondary": "#a0a0a0",
-    "text_muted": "#666666",
-    "grid": "rgba(255,255,255,0.05)",
+    "info": "#0EA5E9",
+    "background": "#F3F7FB",
+    "background_dark": "#EAF0F7",
+    "surface": "rgba(255,255,255,0.85)",
+    "surface_hover": "#FFFFFF",
+    "border": "#D3DEE9",
+    "border_hover": "#B7C7D9",
+    "text": "#102A43",
+    "text_secondary": "#486581",
+    "text_muted": "#7B8794",
+    "grid": "#DFE8F2",
 }
 
 # Chart color sequence
 CHART_COLORS = [
-    "#8b5cf6",  # Purple
-    "#10b981",  # Green
-    "#3b82f6",  # Blue
-    "#f59e0b",  # Amber
-    "#ef4444",  # Red
-    "#06b6d4",  # Cyan
-    "#ec4899",  # Pink
-    "#84cc16",  # Lime
+    "#0F766E",  # Teal
+    "#C2410C",  # Ember
+    "#0EA5E9",  # Sky
+    "#2563EB",  # Blue
+    "#16A34A",  # Green
+    "#7C3AED",  # Indigo
+    "#E11D48",  # Rose
+    "#CA8A04",  # Gold
 ]
 
 # CSS Variables for easy theming
@@ -57,20 +57,21 @@ CSS_VARIABLES = f"""
     --text-muted: {COLORS['text_muted']};
     --grid: {COLORS['grid']};
 
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --border-radius: 12px;
-    --border-radius-lg: 16px;
+    --font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+    --border-radius: 14px;
+    --border-radius-lg: 18px;
     --transition: all 0.2s ease;
 }}
 """
 
-# Plotly dark theme template
+# Plotly light theme template
 PLOTLY_TEMPLATE = go.layout.Template(
     layout=go.Layout(
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(255,255,255,0.55)",
         font=dict(
-            family="Inter, sans-serif",
+            family="Space Grotesk, sans-serif",
             color=COLORS["text_secondary"],
             size=12,
         ),
@@ -101,9 +102,11 @@ PLOTLY_TEMPLATE = go.layout.Template(
         ),
         hovermode="x unified",
         hoverlabel=dict(
-            bgcolor="rgba(30, 30, 63, 0.95)",
+            bgcolor="rgba(240, 248, 255, 0.98)",
+            bordercolor=COLORS["border_hover"],
+            font_color=COLORS["text"],
             font_size=12,
-            font_family="Inter, sans-serif",
+            font_family="Space Grotesk, sans-serif",
         ),
         margin=dict(l=50, r=20, t=40, b=50),
         colorway=CHART_COLORS,
@@ -146,7 +149,7 @@ def get_table_style() -> dict:
             "color": COLORS["text_secondary"],
             "borderBottom": f"1px solid {COLORS['border']}",
             "padding": "12px 16px",
-            "fontFamily": "Inter, sans-serif",
+            "fontFamily": "Space Grotesk, sans-serif",
             "fontSize": "14px",
             "textAlign": "left",
         },
@@ -158,7 +161,7 @@ def get_table_style() -> dict:
             },
             {
                 "if": {"state": "selected"},
-                "backgroundColor": f"rgba(139, 92, 246, 0.1)",
+                "backgroundColor": "rgba(15, 118, 110, 0.10)",
                 "border": f"1px solid {COLORS['primary']}",
             },
         ],

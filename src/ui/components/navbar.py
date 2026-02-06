@@ -35,6 +35,7 @@ def create_navbar(current_page: str = "dashboard") -> html.Div:
             "label": "Analysis",
             "icon": "◇",
             "items": [
+                {"id": "live-analyzer", "icon": "⚡", "label": "Live Analyzer"},
                 {"id": "factor-analysis", "icon": "◇", "label": "Factor Analysis"},
                 {"id": "regime-monitor", "icon": "◆", "label": "Regime Monitor"},
             ],

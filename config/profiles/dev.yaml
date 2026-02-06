@@ -1,0 +1,18 @@
+name: dev
+env_file: .env
+
+dashboard:
+  host: 127.0.0.1
+  port: 8050
+  debug: true
+
+realtime:
+  refresh_interval_ms: 3000
+
+pipeline:
+  top: 20
+  start: "2020-01-01"
+
+paper_demo:
+  symbol: AAPL
+  steps: 120

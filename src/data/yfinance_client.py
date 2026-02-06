@@ -47,7 +47,7 @@ class YFinanceClient:
         start: date | str | None = None,
         end: date | str | None = None,
         period: str | None = None,
-        interval: Literal["1d", "1wk", "1mo"] = "1d",
+        interval: str = "1d",
     ) -> pd.DataFrame:
         """Get historical price data for a symbol.
 

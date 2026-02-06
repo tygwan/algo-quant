@@ -28,8 +28,10 @@ import yaml
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.config import load_runtime_profile
 from src.data.yfinance_client import YFinanceClient
 from src.data.collector import DataCollector, CollectionConfig, SP500_TOP_100
+from src.env import load_local_env
 from src.factors.ff5 import FamaFrench5
 from src.factors.ff_data import FamaFrenchDataLoader
 from src.regime.hmm_classifier import HMMClassifier
@@ -488,16 +490,26 @@ Examples:
         """
     )
     parser.add_argument(
+        "--profile",
+        default=None,
+        help="Runtime profile name or YAML path (default: AQ_PROFILE or dev)",
+    )
+    parser.add_argument(
         "--symbols",
         nargs="+",
         help="Stock symbols (e.g., AAPL MSFT GOOGL or AAPL,MSFT,GOOGL)",
     )
     parser.add_argument("--watchlist", "-w", help="Watchlist name from config/watchlist.yaml (default, tech, etf, semiconductor, value, growth)")
-    parser.add_argument("--top", type=int, default=20, help="Top N S&P 500 stocks (if no symbols/watchlist)")
-    parser.add_argument("--start", default="2020-01-01", help="Start date (YYYY-MM-DD)")
+    parser.add_argument("--top", type=int, default=None, help="Top N S&P 500 stocks (if no symbols/watchlist)")
+    parser.add_argument("--start", default=None, help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end", default=str(date.today()), help="End date (YYYY-MM-DD)")
 
     args = parser.parse_args()
+    profile = load_runtime_profile(args.profile)
+    load_local_env(profile.env_file)
+
+    top_n = int(args.top) if args.top is not None else int(profile.pipeline_top)
+    start_date = args.start or profile.pipeline_start
 
     # Get symbols (priority: --symbols > --watchlist > --top)
     if args.symbols:
@@ -510,14 +522,15 @@ Examples:
             sys.exit(1)
         logger.info(f"Using watchlist '{args.watchlist}': {symbols}")
     else:
-        symbols = SP500_TOP_100[:args.top]
-        logger.info(f"Using top {args.top} S&P 500 stocks")
+        symbols = SP500_TOP_100[:top_n]
+        logger.info(f"Using top {top_n} S&P 500 stocks")
 
     logger.info(f"Running pipeline with {len(symbols)} symbols")
-    logger.info(f"Date range: {args.start} to {args.end}")
+    logger.info(f"Profile: {profile.name}")
+    logger.info(f"Date range: {start_date} to {args.end}")
 
     # Run pipeline
-    data = collect_data(symbols, args.start, args.end)
+    data = collect_data(symbols, start_date, args.end)
 
     factor_results = run_factor_analysis(data)
 

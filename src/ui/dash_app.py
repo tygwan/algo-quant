@@ -1,7 +1,7 @@
 """Dash application entry point."""
 
 from dash import Dash, html, dcc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 
 from src.ui.components import create_navbar
 from src.ui.layouts import (
@@ -20,17 +20,45 @@ app = Dash(
     __name__,
     suppress_callback_exceptions=True,
     title="algo-quant Dashboard",
-    update_title="Loading...",
+    update_title=None,
 )
 
 server = app.server
 
+
+def create_page_header(page_key: str) -> html.Div:
+    """Create consistent page header shell."""
+    page_info = PAGE_CONFIG.get(page_key, PAGE_CONFIG["dashboard"])
+
+    return html.Div(
+        className="page-header",
+        children=[
+            html.Div("ALGO QUANT WORKSPACE", className="page-kicker"),
+            html.H1(page_info["title"], className="page-title"),
+            html.P(page_info["subtitle"], className="page-subtitle"),
+            html.Div(
+                className="page-meta",
+                children=[
+                    html.Span(page_info.get("icon", "◉"), className="page-chip"),
+                    html.Span(f"/{page_key}", className="page-chip"),
+                    html.Span("US Stocks + Crypto", className="page-chip"),
+                ],
+            ),
+        ],
+    )
+
+
 # Main layout
 app.layout = html.Div(
-    className="app-container",
+    className="app-shell",
     children=[
         # URL routing
         dcc.Location(id="url", refresh=False),
+
+        # Background ambience
+        html.Div(className="ambient ambient-a"),
+        html.Div(className="ambient ambient-b"),
+        html.Div(className="ambient-grid"),
 
         # Sidebar
         html.Div(id="sidebar-container"),
@@ -39,6 +67,7 @@ app.layout = html.Div(
         html.Div(
             className="main-content",
             children=[
+                html.Div(id="page-header-container"),
                 html.Div(id="page-content"),
             ],
         ),
@@ -55,7 +84,11 @@ app.layout = html.Div(
 
 # Page routing
 @app.callback(
-    [Output("sidebar-container", "children"), Output("page-content", "children")],
+    [
+        Output("sidebar-container", "children"),
+        Output("page-header-container", "children"),
+        Output("page-content", "children"),
+    ],
     [Input("url", "pathname")],
 )
 def display_page(pathname):
@@ -66,11 +99,9 @@ def display_page(pathname):
     # Remove leading slash for lookup
     page_key = pathname.lstrip("/") or "dashboard"
 
-    # Get page config
-    page_info = PAGE_CONFIG.get(page_key, PAGE_CONFIG["dashboard"])
-
     # Create navbar with current page
     navbar = create_navbar(page_key)
+    header = create_page_header(page_key)
 
     # Route to page layout
     if page_key == "dashboard":
@@ -90,7 +121,7 @@ def display_page(pathname):
     else:
         content = create_dashboard_layout()
 
-    return navbar, content
+    return navbar, header, content
 
 
 # Import callbacks to register them
@@ -100,9 +131,9 @@ register_callbacks(app)
 register_live_analyzer_callbacks(app)
 
 
-def run_dashboard(debug: bool = True, port: int = 8050):
+def run_dashboard(debug: bool = True, port: int = 8050, host: str = "127.0.0.1"):
     """Run the Dash dashboard."""
-    app.run(debug=debug, port=port)
+    app.run(debug=debug, port=port, host=host)
 
 
 if __name__ == "__main__":

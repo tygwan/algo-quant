@@ -1,32 +1,9 @@
 #!/usr/bin/env python3
-"""Launch Algo-Quant Dashboard."""
+"""Compatibility launcher for Dash dashboard."""
 
-import subprocess
-import sys
-from pathlib import Path
+from __future__ import annotations
 
-
-def main():
-    """Launch the Streamlit dashboard."""
-    app_path = Path(__file__).parent / "src" / "ui" / "app.py"
-    
-    if not app_path.exists():
-        print(f"Error: {app_path} not found")
-        sys.exit(1)
-    
-    print("🚀 Starting Algo-Quant Dashboard...")
-    print("   Open http://localhost:8501 in your browser")
-    print("   Press Ctrl+C to stop\n")
-    
-    try:
-        subprocess.run([
-            sys.executable, "-m", "streamlit", "run",
-            str(app_path),
-            "--server.port=8501",
-            "--browser.gatherUsageStats=false",
-        ])
-    except KeyboardInterrupt:
-        print("\n👋 Dashboard stopped")
+from scripts.run_dashboard import main
 
 
 if __name__ == "__main__":
