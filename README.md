@@ -113,6 +113,10 @@ algo-quant/
 
 Dash 기반 반응형 웹 대시보드를 제공합니다.
 
+| Dashboard | Factor Analysis |
+|:-:|:-:|
+| ![Dashboard](algo-quant-main.png) | ![Factor Analysis](algo-quant-factoranalysis.png) |
+
 ```bash
 # 대시보드 실행 (통합 CLI)
 uv run aq dashboard --profile dev
